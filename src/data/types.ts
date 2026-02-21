@@ -33,3 +33,24 @@ export interface Activity {
   hash: string;
   time: string;
 }
+
+export interface Commit {
+  hash: string;
+  message: string;
+  author: string;
+  time: string;
+  branch: string;
+}
+
+export interface Branch {
+  name: string;
+  isDefault: boolean;
+  lastCommit: string;
+  aheadBehind: string;
+}
+
+export interface FileTreeNode {
+  name: string;
+  type: "file" | "folder";
+  children?: FileTreeNode[];
+}

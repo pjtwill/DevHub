@@ -1,4 +1,5 @@
 import { GitBranch, ExternalLink, FolderOpen, ArrowUpDown } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Project } from "@/data/types";
 import { getLanguageConfig } from "@/lib/languages";
@@ -16,11 +17,15 @@ interface ProjectCardProps {
 }
 
 export function ProjectCard({ project }: ProjectCardProps) {
+  const navigate = useNavigate();
   const lang = getLanguageConfig(project.language);
   const status = statusConfig[project.syncStatus];
 
   return (
-    <div className="group bg-card border border-border rounded-lg p-5 transition-all duration-200 hover:border-primary/30 hover:bg-surface-hover animate-fade-in">
+    <div
+      className="group bg-card border border-border rounded-lg p-5 transition-all duration-200 hover:border-primary/30 hover:bg-surface-hover animate-fade-in cursor-pointer"
+      onClick={() => navigate(`/projects/${project.id}`)}
+    >
       {/* Header */}
       <div className="flex items-start justify-between mb-4">
         <div className="flex items-center gap-3">
@@ -46,6 +51,7 @@ export function ProjectCard({ project }: ProjectCardProps) {
         href={project.githubUrl}
         target="_blank"
         rel="noopener noreferrer"
+        onClick={(e) => e.stopPropagation()}
         className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-primary transition-colors mb-2"
       >
         <ExternalLink className="h-3 w-3" />
@@ -67,7 +73,7 @@ export function ProjectCard({ project }: ProjectCardProps) {
       </div>
 
       {/* Actions */}
-      <div className="flex gap-2">
+      <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
         <Button
           size="sm"
           className="flex-1 gap-1.5 text-xs h-8 bg-info hover:bg-info/80 text-info-foreground"
