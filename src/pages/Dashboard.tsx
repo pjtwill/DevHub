@@ -1,3 +1,4 @@
+import { useState } from "react";
 import {
   FolderKanban,
   GitCommit,
@@ -8,6 +9,8 @@ import {
 import { Link } from "react-router-dom";
 import { mockProjects, mockActivities } from "@/data/mockData";
 import { ProjectCard } from "@/components/ProjectCard";
+import { ProjectDetailPanel } from "@/components/ProjectDetailPanel";
+import { Project } from "@/data/types";
 
 const stats = [
   {
@@ -31,6 +34,7 @@ const stats = [
 ];
 
 export default function Dashboard() {
+  const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   const recentProjects = mockProjects.slice(0, 3);
 
   return (
@@ -66,7 +70,7 @@ export default function Dashboard() {
         </div>
         <div className="grid grid-cols-3 gap-4">
           {recentProjects.map((p) => (
-            <ProjectCard key={p.id} project={p} />
+            <ProjectCard key={p.id} project={p} onClick={() => setSelectedProject(p)} />
           ))}
         </div>
       </section>
@@ -98,6 +102,8 @@ export default function Dashboard() {
           ))}
         </div>
       </section>
+
+      <ProjectDetailPanel project={selectedProject} onClose={() => setSelectedProject(null)} />
     </div>
   );
 }
