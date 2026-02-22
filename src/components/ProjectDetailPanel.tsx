@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { X, GitCommit, GitBranch, FolderOpen, ArrowUpDown, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Project } from "@/data/types";
 import { getProjectCommits, getProjectBranches } from "@/data/projectDetailData";
 import { getLanguageConfig } from "@/lib/languages";
@@ -96,34 +97,51 @@ export function ProjectDetailPanel({ project, onClose }: ProjectDetailPanelProps
 
         {/* Actions bar */}
         <div className="flex items-center gap-2 px-5 py-3 border-b border-border">
-          <Button
-            size="sm"
-            className="gap-1.5 text-xs h-8 bg-info hover:bg-info/80 text-info-foreground"
-            onClick={() => toast.success("Opening in VS Code...", { description: project.localPath })}
-          >
-            <FolderOpen className="h-3.5 w-3.5" />
-            Open in VS Code
-          </Button>
-          <Button
-            size="sm"
-            variant="outline"
-            className="gap-1.5 text-xs h-8"
-            onClick={() => toast.info("Syncing with remote...")}
-          >
-            <ArrowUpDown className="h-3.5 w-3.5" />
-            Push / Pull
-          </Button>
-          <a
-            href={project.githubUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="ml-auto"
-          >
-            <Button size="sm" variant="ghost" className="gap-1.5 text-xs h-8 text-muted-foreground">
-              <ExternalLink className="h-3.5 w-3.5" />
-              GitHub
-            </Button>
-          </a>
+          <TooltipProvider delayDuration={300}>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  size="sm"
+                  className="gap-1.5 text-xs h-8 bg-info hover:bg-info/80 text-info-foreground"
+                  onClick={() => toast.success("Opening in VS Code...", { description: project.localPath })}
+                >
+                  <FolderOpen className="h-3.5 w-3.5" />
+                  Open in VS Code
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom" className="text-xs">Open in your local editor</TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="gap-1.5 text-xs h-8"
+                  onClick={() => toast.info("Syncing with remote...")}
+                >
+                  <ArrowUpDown className="h-3.5 w-3.5" />
+                  Push / Pull
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom" className="text-xs">Sync with remote</TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <a
+                  href={project.githubUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="ml-auto"
+                >
+                  <Button size="sm" variant="ghost" className="gap-1.5 text-xs h-8 text-muted-foreground">
+                    <ExternalLink className="h-3.5 w-3.5" />
+                    GitHub
+                  </Button>
+                </a>
+              </TooltipTrigger>
+              <TooltipContent side="bottom" className="text-xs">Open on GitHub</TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
         </div>
 
         {/* Tabs */}
@@ -157,7 +175,9 @@ export function ProjectDetailPanel({ project, onClose }: ProjectDetailPanelProps
         </div>
 
         {/* Content */}
-        <div className="flex-1 overflow-y-auto">
+        <div className="relative flex-1 overflow-y-auto">
+          {/* Scroll fade gradient */}
+          <div className="pointer-events-none absolute bottom-0 left-0 right-0 h-12 bg-gradient-to-t from-card to-transparent z-10" />
           {tab === "commits" ? (
             <div className="divide-y divide-border">
               {commits.map((c, i) => (

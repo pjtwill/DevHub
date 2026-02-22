@@ -98,28 +98,29 @@ export default function Dashboard() {
             compact
           />
         ) : (
-        <div className="bg-card border border-border rounded-lg divide-y divide-border">
-           {mockActivities.map((a, i) => (
-            <div
-              key={a.id}
-              className="flex items-center gap-4 px-5 py-3.5 animate-fade-in"
-              style={{ animationDelay: `${i * 50}ms`, animationFillMode: "backwards" }}
-            >
-              <GitCommit className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-              <div className="flex-1 min-w-0">
-                <p className="text-sm text-foreground truncate">{a.message}</p>
-                <p className="text-xs text-muted-foreground">
-                  {a.project} ·{" "}
-                  <span className="font-mono">{a.hash}</span>
-                </p>
+          <div className="relative bg-card border border-border rounded-lg divide-y divide-border">
+            <div className="pointer-events-none absolute bottom-0 left-0 right-0 h-10 bg-gradient-to-t from-card to-transparent z-10 rounded-b-lg" />
+            {mockActivities.map((a, i) => (
+              <div
+                key={a.id}
+                className="flex items-center gap-4 px-5 py-3.5 animate-fade-in"
+                style={{ animationDelay: `${i * 50}ms`, animationFillMode: "backwards" }}
+              >
+                <GitCommit className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm text-foreground truncate">{a.message}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {a.project} ·{" "}
+                    <span className="font-mono">{a.hash}</span>
+                  </p>
+                </div>
+                <span className="text-xs text-muted-foreground flex items-center gap-1 flex-shrink-0">
+                  <Clock className="h-3 w-3" />
+                  {a.time}
+                </span>
               </div>
-              <span className="text-xs text-muted-foreground flex items-center gap-1 flex-shrink-0">
-                <Clock className="h-3 w-3" />
-                {a.time}
-              </span>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
         )}
       </section>
 
