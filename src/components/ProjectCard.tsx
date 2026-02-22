@@ -1,5 +1,6 @@
-import { GitBranch, ExternalLink, FolderOpen, ArrowUpDown } from "lucide-react";
+import { GitBranch, ExternalLink, FolderOpen, ArrowUpDown, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Project } from "@/data/types";
 import { getLanguageConfig } from "@/lib/languages";
 import { cn } from "@/lib/utils";
@@ -72,24 +73,42 @@ export function ProjectCard({ project, onClick }: ProjectCardProps) {
       </div>
 
       {/* Actions */}
-      <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
-        <Button
-          size="sm"
-          className="flex-1 gap-1.5 text-xs h-8 bg-info hover:bg-info/80 text-info-foreground"
-          onClick={() => toast.success("Opening in VS Code...", { description: project.localPath })}
-        >
-          <FolderOpen className="h-3.5 w-3.5" />
-          Open in VS Code
-        </Button>
-        <Button
-          size="sm"
-          variant="outline"
-          className="flex-1 gap-1.5 text-xs h-8"
-          onClick={() => toast.info("Syncing with remote...")}
-        >
-          <ArrowUpDown className="h-3.5 w-3.5" />
-          Push / Pull
-        </Button>
+      <div className="flex gap-2 mb-3" onClick={(e) => e.stopPropagation()}>
+        <TooltipProvider delayDuration={300}>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                size="sm"
+                className="flex-1 gap-1.5 text-xs h-8 bg-info hover:bg-info/80 text-info-foreground"
+                onClick={() => toast.success("Opening in VS Code...", { description: project.localPath })}
+              >
+                <FolderOpen className="h-3.5 w-3.5" />
+                Open in VS Code
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="bottom" className="text-xs">Open project in VS Code</TooltipContent>
+          </Tooltip>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                size="sm"
+                variant="outline"
+                className="flex-1 gap-1.5 text-xs h-8"
+                onClick={() => toast.info("Syncing with remote...")}
+              >
+                <ArrowUpDown className="h-3.5 w-3.5" />
+                Push / Pull
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="bottom" className="text-xs">Sync with remote repository</TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      </div>
+
+      {/* Last synced */}
+      <div className="flex items-center gap-1 text-[11px] text-muted-foreground">
+        <Clock className="h-3 w-3" />
+        <span>Last synced {project.lastModified}</span>
       </div>
     </div>
   );

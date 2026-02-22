@@ -21,6 +21,8 @@ export function AppLayout() {
 
   return (
     <div className="min-h-screen flex">
+      {/* Accent line */}
+      <div className="fixed top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-primary via-[hsl(280,84%,67%)] to-primary z-50" />
       <AppSidebar />
       <div className="flex-1 ml-56 flex flex-col">
         <TopBar onOpenCommand={() => setCommandOpen(true)} />
