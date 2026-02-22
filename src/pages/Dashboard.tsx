@@ -5,6 +5,7 @@ import {
   Activity,
   Clock,
   ArrowRight,
+  Inbox,
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { mockProjects, mockActivities } from "@/data/mockData";
@@ -12,6 +13,7 @@ import { ProjectCard } from "@/components/ProjectCard";
 import { ProjectDetailPanel } from "@/components/ProjectDetailPanel";
 import { Project } from "@/data/types";
 import { useCountUp } from "@/hooks/useCountUp";
+import { EmptyState } from "@/components/EmptyState";
 
 function AnimatedStat({ value }: { value: number }) {
   const animated = useCountUp(value);
@@ -88,6 +90,14 @@ export default function Dashboard() {
         <h2 className="text-sm font-semibold text-foreground mb-4">
           Recent Activity
         </h2>
+        {mockActivities.length === 0 ? (
+          <EmptyState
+            icon={Inbox}
+            title="No recent activity"
+            subtitle="Commits and sync events will appear here"
+            compact
+          />
+        ) : (
         <div className="bg-card border border-border rounded-lg divide-y divide-border">
            {mockActivities.map((a, i) => (
             <div
@@ -110,6 +120,7 @@ export default function Dashboard() {
             </div>
           ))}
         </div>
+        )}
       </section>
 
       <ProjectDetailPanel project={selectedProject} onClose={() => setSelectedProject(null)} />

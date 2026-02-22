@@ -1,10 +1,33 @@
+import { useState } from "react";
 import { mockRepos } from "@/data/mockData";
 import { getLanguageConfig } from "@/lib/languages";
-import { Star, Link as LinkIcon, ExternalLink } from "lucide-react";
+import { Star, Link as LinkIcon, ExternalLink, Github } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { EmptyState } from "@/components/EmptyState";
+import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 
 export default function GitHubPage() {
+  const navigate = useNavigate();
+  // Toggle this to preview empty state: set to true
+  const [connected] = useState(true);
+
+  if (!connected) {
+    return (
+      <div className="space-y-6 max-w-4xl">
+        <h1 className="text-lg font-semibold text-foreground">GitHub Repositories</h1>
+        <EmptyState
+          icon={Github}
+          title="Connect your GitHub account"
+          subtitle="Paste your Personal Access Token in Settings to see your repositories"
+          actions={[
+            { label: "Go to Settings", onClick: () => navigate("/settings") },
+          ]}
+        />
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6 max-w-4xl">
       <h1 className="text-lg font-semibold text-foreground">GitHub Repositories</h1>
