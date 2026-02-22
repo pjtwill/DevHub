@@ -36,14 +36,15 @@ export function AppSidebar() {
               ? location.pathname === "/"
               : location.pathname.startsWith(item.to);
           return (
-            <RouterNavLink
+             <RouterNavLink
               key={item.to}
               to={item.to}
               className={cn(
-                "flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors duration-150",
+                "relative flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-all duration-200",
+                "before:absolute before:left-0 before:top-1/2 before:-translate-y-1/2 before:w-[3px] before:rounded-full before:bg-primary before:transition-all before:duration-200",
                 isActive
-                  ? "bg-primary/10 text-primary"
-                  : "text-sidebar-foreground hover:bg-surface-hover hover:text-foreground"
+                  ? "bg-primary/10 text-primary before:h-5 before:opacity-100"
+                  : "text-sidebar-foreground hover:bg-surface-hover hover:text-foreground before:h-0 before:opacity-0 hover:before:h-3 hover:before:opacity-60"
               )}
             >
               <item.icon className="h-4 w-4" />

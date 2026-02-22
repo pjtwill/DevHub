@@ -23,7 +23,7 @@ const statusConfig = {
   behind: { label: "Behind", className: "bg-destructive" },
 };
 
-function ProjectRow({ project, onClick }: { project: Project; onClick: () => void }) {
+function ProjectRow({ project, onClick, style }: { project: Project; onClick: () => void; style?: React.CSSProperties }) {
   const lang = getLanguageConfig(project.language);
   const status = statusConfig[project.syncStatus];
 
@@ -31,6 +31,7 @@ function ProjectRow({ project, onClick }: { project: Project; onClick: () => voi
     <div
       className="flex items-center gap-4 px-5 py-3 hover:bg-surface-hover transition-colors cursor-pointer animate-fade-in"
       onClick={onClick}
+      style={style}
     >
       <div
         className="w-8 h-8 rounded-md flex items-center justify-center text-xs font-semibold flex-shrink-0"
@@ -153,14 +154,16 @@ export default function Projects() {
       {filtered.length > 0 ? (
         view === "grid" ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {filtered.map((p) => (
-              <ProjectCard key={p.id} project={p} onClick={() => setSelectedProject(p)} />
+            {filtered.map((p, i) => (
+              <div key={p.id} className="animate-fade-in" style={{ animationDelay: `${i * 50}ms`, animationFillMode: "backwards" }}>
+                <ProjectCard project={p} onClick={() => setSelectedProject(p)} />
+              </div>
             ))}
           </div>
         ) : (
           <div className="bg-card border border-border rounded-lg divide-y divide-border overflow-hidden">
-            {filtered.map((p) => (
-              <ProjectRow key={p.id} project={p} onClick={() => setSelectedProject(p)} />
+            {filtered.map((p, i) => (
+              <ProjectRow key={p.id} project={p} onClick={() => setSelectedProject(p)} style={{ animationDelay: `${i * 50}ms`, animationFillMode: "backwards" }} />
             ))}
           </div>
         )

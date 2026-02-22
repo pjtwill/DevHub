@@ -11,6 +11,12 @@ import { mockProjects, mockActivities } from "@/data/mockData";
 import { ProjectCard } from "@/components/ProjectCard";
 import { ProjectDetailPanel } from "@/components/ProjectDetailPanel";
 import { Project } from "@/data/types";
+import { useCountUp } from "@/hooks/useCountUp";
+
+function AnimatedStat({ value }: { value: number }) {
+  const animated = useCountUp(value);
+  return <>{animated}</>;
+}
 
 const stats = [
   {
@@ -52,7 +58,9 @@ export default function Dashboard() {
               </span>
               <s.icon className={`h-4 w-4 ${s.color}`} />
             </div>
-            <p className="text-3xl font-semibold text-foreground">{s.value}</p>
+            <p className="text-3xl font-semibold text-foreground">
+              <AnimatedStat value={s.value} />
+            </p>
           </div>
         ))}
       </div>
@@ -81,10 +89,11 @@ export default function Dashboard() {
           Recent Activity
         </h2>
         <div className="bg-card border border-border rounded-lg divide-y divide-border">
-          {mockActivities.map((a) => (
+           {mockActivities.map((a, i) => (
             <div
               key={a.id}
               className="flex items-center gap-4 px-5 py-3.5 animate-fade-in"
+              style={{ animationDelay: `${i * 50}ms`, animationFillMode: "backwards" }}
             >
               <GitCommit className="h-4 w-4 text-muted-foreground flex-shrink-0" />
               <div className="flex-1 min-w-0">
