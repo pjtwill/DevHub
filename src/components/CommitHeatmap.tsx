@@ -36,32 +36,42 @@ export function CommitHeatmap({ username }: CommitHeatmapProps) {
     const token = localStorage.getItem("devhub_github_token");
     if (!token || !username) { setLoading(false); return; }
 
+    console.log("[CommitHeatmap] Token used:", token.substring(0, 8), "Username:", username);
+
     const map: Record<string, number> = {};
     let eventsTotal = 0;
     let pushEventsCount = 0;
-    const headers = { Authorization: `Bearer ${token}`, Accept: "application/vnd.github+json" };
+    const headers: Record<string, string> = {
+      Authorization: `Bearer ${token}`,
+      Accept: "application/vnd.github+json",
+      "X-GitHub-Api-Version": "2022-11-28",
+    };
 
     try {
-      // 1. Fetch up to 3 pages of events
+      // 1. Fetch 3 pages of events
       const eventPages = await Promise.all(
         [1, 2, 3].map(page =>
           fetch(`https://api.github.com/users/${username}/events?per_page=100&page=${page}`, { headers })
-            .then(r => r.ok ? r.json() : [])
+            .then(r => {
+              if (!r.ok) throw new Error(`HTTP ${r.status}`);
+              return r.json();
+            })
             .catch(() => [])
         )
       );
 
-      for (const events of eventPages) {
-        eventsTotal += events.length;
-        for (const e of events) {
-          if (e.type === "PushEvent") {
-            pushEventsCount++;
-            const day = format(new Date(e.created_at), "yyyy-MM-dd");
-            const commits = e.payload?.commits?.length || e.payload?.size || 1;
-            map[day] = (map[day] || 0) + commits;
-          }
+      const allEvents = (eventPages as any[][]).flat();
+      eventsTotal = allEvents.length;
+      const pushEvents = allEvents.filter(e => e.type === "PushEvent");
+      pushEventsCount = pushEvents.length;
+
+      pushEvents.forEach(event => {
+        if (event.created_at && typeof event.created_at === "string") {
+          const date = event.created_at.substring(0, 10);
+          const count = event.payload?.commits?.length || 1;
+          map[date] = (map[date] || 0) + count;
         }
-      }
+      });
 
       // 2. Fetch recent commits from top 5 most recently pushed repos
       const reposRes = await fetch(`https://api.github.com/user/repos?sort=pushed&per_page=5`, { headers });
@@ -77,28 +87,18 @@ export function CommitHeatmap({ username }: CommitHeatmapProps) {
         for (const commits of commitResults) {
           for (const c of commits) {
             if (c.commit?.author?.date) {
-              const day = format(new Date(c.commit.author.date), "yyyy-MM-dd");
-              // Only add if not already counted from events (use max to avoid double-counting)
-              map[day] = Math.max(map[day] || 0, (map[day] || 0) === 0 ? 1 : map[day]);
-            }
-          }
-        }
-        // Re-count repo commits properly: merge by adding unique commits
-        for (const commits of commitResults) {
-          for (const c of commits) {
-            if (c.commit?.author?.date) {
-              const day = format(new Date(c.commit.author.date), "yyyy-MM-dd");
+              const day = c.commit.author.date.substring(0, 10);
               if (!map[day]) map[day] = 1;
             }
           }
         }
       }
-    } catch {
-      // silent
+    } catch (err) {
+      console.error("[CommitHeatmap] Error fetching data:", err);
     }
 
     const dates = Object.keys(map).filter(k => map[k] > 0).sort();
-    console.log(`[CommitHeatmap] Events total: ${eventsTotal}, Push events: ${pushEventsCount}, Dates with commits: ${dates.length}`, map);
+    console.log("[CommitHeatmap] Total push events:", pushEventsCount, "Dates with commits:", dates.length, map);
     setDebugInfo({
       eventsTotal,
       pushEvents: pushEventsCount,
@@ -110,6 +110,17 @@ export function CommitHeatmap({ username }: CommitHeatmapProps) {
   }, [username]);
 
   useEffect(() => { fetchAllData(); }, [fetchAllData]);
+
+  // Re-fetch when localStorage token changes
+  useEffect(() => {
+    const handleStorage = (e: StorageEvent) => {
+      if (e.key === "devhub_github_token" && e.newValue) {
+        fetchAllData();
+      }
+    };
+    window.addEventListener("storage", handleStorage);
+    return () => window.removeEventListener("storage", handleStorage);
+  }, [fetchAllData]);
 
   // Build 52-week grid
   const today = startOfDay(new Date());
