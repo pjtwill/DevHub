@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
-import { Flame, Calendar, TrendingUp, BarChart3 } from "lucide-react";
+import { Flame, Calendar, TrendingUp, BarChart3, RefreshCw, Loader2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { format, subDays, startOfDay, eachDayOfInterval, getDay, startOfWeek } from "date-fns";
@@ -29,6 +30,7 @@ const MONTH_NAMES = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Se
 export function CommitHeatmap({ username }: CommitHeatmapProps) {
   const [commitMap, setCommitMap] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [debugInfo, setDebugInfo] = useState({ eventsTotal: 0, pushEvents: 0, oldest: "", newest: "" });
 
   const fetchAllData = useCallback(async () => {
@@ -48,15 +50,8 @@ export function CommitHeatmap({ username }: CommitHeatmapProps) {
     };
 
     try {
-      // 1. Fetch 3 pages of authenticated user events
+      // Fetch 3 pages from authenticated /user/events endpoint
       const eventPages = await Promise.all(
-        [1, 2, 3].map(page =>
-          fetch(`https://api.github.com/users/${username}/events?per_page=100&page=${page}`, { headers })
-            .then(r => r.ok ? r.json() : [])
-            .catch(() => [])
-        )
-      );
-      const authEventPages = await Promise.all(
         [1, 2, 3].map(page =>
           fetch(`https://api.github.com/user/events?per_page=100&page=${page}`, { headers })
             .then(r => r.ok ? r.json() : [])
@@ -64,12 +59,9 @@ export function CommitHeatmap({ username }: CommitHeatmapProps) {
         )
       );
 
-      const allEvents = [...(eventPages as any[][]).flat(), ...(authEventPages as any[][]).flat()];
-      // Deduplicate by event id
-      const seen = new Set<string>();
-      const uniqueEvents = allEvents.filter(e => { if (seen.has(e.id)) return false; seen.add(e.id); return true; });
-      eventsTotal = uniqueEvents.length;
-      const pushEvents = uniqueEvents.filter(e => e.type === "PushEvent");
+      const allEvents = (eventPages as any[][]).flat();
+      eventsTotal = allEvents.length;
+      const pushEvents = allEvents.filter(e => e.type === "PushEvent");
       pushEventsCount = pushEvents.length;
 
       pushEvents.forEach(event => {
@@ -273,10 +265,26 @@ export function CommitHeatmap({ username }: CommitHeatmapProps) {
         <span className="text-[10px] text-muted-foreground ml-1">More</span>
       </div>
 
-      {/* Debug info */}
-      <p className="text-[10px] text-muted-foreground mt-2">
-        Events loaded: {debugInfo.eventsTotal} | Push events found: {debugInfo.pushEvents} | Date range: {debugInfo.oldest} to {debugInfo.newest}
-      </p>
+      {/* Debug info + Refresh */}
+      <div className="flex items-center justify-between mt-2">
+        <p className="text-[10px] text-muted-foreground">
+          Events loaded: {debugInfo.eventsTotal} | Push events found: {debugInfo.pushEvents} | Date range: {debugInfo.oldest} to {debugInfo.newest}
+        </p>
+        <Button
+          size="sm"
+          variant="outline"
+          className="gap-1.5 text-xs h-7"
+          disabled={refreshing}
+          onClick={async () => {
+            setRefreshing(true);
+            await fetchAllData();
+            setRefreshing(false);
+          }}
+        >
+          {refreshing ? <Loader2 className="h-3 w-3 animate-spin" /> : <RefreshCw className="h-3 w-3" />}
+          Refresh
+        </Button>
+      </div>
 
       {/* Stats */}
       <div className="grid grid-cols-4 gap-4 mt-4 pt-4 border-t border-border">
