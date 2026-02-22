@@ -1,4 +1,3 @@
-import { useState } from "react";
 import {
   FolderKanban,
   GitCommit,
@@ -8,42 +7,41 @@ import {
   Inbox,
 } from "lucide-react";
 import { Link } from "react-router-dom";
-import { mockProjects, mockActivities } from "@/data/mockData";
 import { ProjectCard } from "@/components/ProjectCard";
-import { ProjectDetailPanel } from "@/components/ProjectDetailPanel";
-import { Project } from "@/data/types";
 import { useCountUp } from "@/hooks/useCountUp";
 import { EmptyState } from "@/components/EmptyState";
+import { Skeleton } from "@/components/ui/skeleton";
+import { useGitHubUser } from "@/contexts/GitHubUserContext";
 
 function AnimatedStat({ value }: { value: number }) {
   const animated = useCountUp(value);
   return <>{animated}</>;
 }
 
-const stats = [
-  {
-    label: "Total Projects",
-    value: mockProjects.length,
-    icon: FolderKanban,
-    color: "text-primary",
-  },
-  {
-    label: "Synced",
-    value: mockProjects.filter((p) => p.syncStatus === "synced").length,
-    icon: GitCommit,
-    color: "text-success",
-  },
-  {
-    label: "Pending Changes",
-    value: mockProjects.filter((p) => p.syncStatus !== "synced").length,
-    icon: Activity,
-    color: "text-warning",
-  },
-];
-
 export default function Dashboard() {
-  const [selectedProject, setSelectedProject] = useState<Project | null>(null);
-  const recentProjects = mockProjects.slice(0, 3);
+  const { repos, reposLoading } = useGitHubUser();
+  const recentRepos = repos.slice(0, 3);
+
+  const stats = [
+    {
+      label: "Total Projects",
+      value: repos.length,
+      icon: FolderKanban,
+      color: "text-primary",
+    },
+    {
+      label: "Languages",
+      value: new Set(repos.map((r) => r.language).filter(Boolean)).size,
+      icon: Activity,
+      color: "text-success",
+    },
+    {
+      label: "Total Stars",
+      value: repos.reduce((sum, r) => sum + r.stargazers_count, 0),
+      icon: GitCommit,
+      color: "text-warning",
+    },
+  ];
 
   return (
     <div className="space-y-8 max-w-6xl">
@@ -78,53 +76,53 @@ export default function Dashboard() {
             All projects <ArrowRight className="h-3 w-3" />
           </Link>
         </div>
-        <div className="grid grid-cols-3 gap-4">
-          {recentProjects.map((p) => (
-            <ProjectCard key={p.id} project={p} onClick={() => setSelectedProject(p)} />
-          ))}
-        </div>
+        {reposLoading ? (
+          <div className="grid grid-cols-3 gap-4">
+            {Array.from({ length: 3 }).map((_, i) => (
+              <div key={i} className="bg-card border border-border rounded-lg p-5 space-y-3">
+                <div className="flex items-center gap-3">
+                  <Skeleton className="w-9 h-9 rounded-md" />
+                  <div className="space-y-1">
+                    <Skeleton className="h-4 w-28" />
+                    <Skeleton className="h-3 w-16" />
+                  </div>
+                </div>
+                <Skeleton className="h-3 w-full" />
+                <div className="flex gap-2">
+                  <Skeleton className="h-8 flex-1" />
+                  <Skeleton className="h-8 flex-1" />
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : recentRepos.length > 0 ? (
+          <div className="grid grid-cols-3 gap-4">
+            {recentRepos.map((r) => (
+              <ProjectCard key={r.id} repo={r} />
+            ))}
+          </div>
+        ) : (
+          <EmptyState
+            icon={Inbox}
+            title="No projects yet"
+            subtitle="Connect your GitHub account in Settings to see your repos here"
+            compact
+          />
+        )}
       </section>
 
-      {/* Recent Activity */}
+      {/* Recent Activity - placeholder */}
       <section>
         <h2 className="text-sm font-semibold text-foreground mb-4">
           Recent Activity
         </h2>
-        {mockActivities.length === 0 ? (
-          <EmptyState
-            icon={Inbox}
-            title="No recent activity"
-            subtitle="Commits and sync events will appear here"
-            compact
-          />
-        ) : (
-          <div className="relative bg-card border border-border rounded-lg divide-y divide-border">
-            <div className="pointer-events-none absolute bottom-0 left-0 right-0 h-10 bg-gradient-to-t from-card to-transparent z-10 rounded-b-lg" />
-            {mockActivities.map((a, i) => (
-              <div
-                key={a.id}
-                className="flex items-center gap-4 px-5 py-3.5 animate-fade-in"
-                style={{ animationDelay: `${i * 50}ms`, animationFillMode: "backwards" }}
-              >
-                <GitCommit className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm text-foreground truncate">{a.message}</p>
-                  <p className="text-xs text-muted-foreground">
-                    {a.project} ·{" "}
-                    <span className="font-mono">{a.hash}</span>
-                  </p>
-                </div>
-                <span className="text-xs text-muted-foreground flex items-center gap-1 flex-shrink-0">
-                  <Clock className="h-3 w-3" />
-                  {a.time}
-                </span>
-              </div>
-            ))}
-          </div>
-        )}
+        <EmptyState
+          icon={Inbox}
+          title="No recent activity"
+          subtitle="Commits and sync events will appear here"
+          compact
+        />
       </section>
-
-      <ProjectDetailPanel project={selectedProject} onClose={() => setSelectedProject(null)} />
     </div>
   );
 }

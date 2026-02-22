@@ -1,25 +1,19 @@
 import { GitBranch, ExternalLink, FolderOpen, ArrowUpDown, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Project } from "@/data/types";
+import { GitHubRepo } from "@/contexts/GitHubUserContext";
 import { getLanguageConfig } from "@/lib/languages";
-import { cn } from "@/lib/utils";
 import { toast } from "sonner";
-
-const statusConfig = {
-  synced: { label: "Synced", className: "bg-success" },
-  uncommitted: { label: "Uncommitted", className: "bg-warning" },
-  behind: { label: "Behind", className: "bg-destructive" },
-};
+import { formatDistanceToNow } from "date-fns";
 
 interface ProjectCardProps {
-  project: Project;
+  repo: GitHubRepo;
   onClick?: () => void;
 }
 
-export function ProjectCard({ project, onClick }: ProjectCardProps) {
-  const lang = getLanguageConfig(project.language);
-  const status = statusConfig[project.syncStatus];
+export function ProjectCard({ repo, onClick }: ProjectCardProps) {
+  const lang = getLanguageConfig(repo.language || "");
+  const pushedAgo = formatDistanceToNow(new Date(repo.pushed_at), { addSuffix: true });
 
   return (
     <div
@@ -36,39 +30,36 @@ export function ProjectCard({ project, onClick }: ProjectCardProps) {
             {lang.icon}
           </div>
           <div>
-            <h3 className="text-sm font-semibold text-foreground">{project.name}</h3>
-            <span className="text-xs text-muted-foreground">{project.language}</span>
+            <h3 className="text-sm font-semibold text-foreground">{repo.name}</h3>
+            {repo.language && (
+              <span className="text-xs text-muted-foreground">{repo.language}</span>
+            )}
           </div>
-        </div>
-        <div className="flex items-center gap-1.5">
-          <span className={cn("w-2 h-2 rounded-full animate-pulse-dot", status.className)} />
-          <span className="text-xs text-muted-foreground">{status.label}</span>
         </div>
       </div>
 
-      {/* GitHub info */}
+      {/* Description */}
+      {repo.description && (
+        <p className="text-xs text-muted-foreground mb-3 line-clamp-2">{repo.description}</p>
+      )}
+
+      {/* GitHub link */}
       <a
-        href={project.githubUrl}
+        href={repo.html_url}
         target="_blank"
         rel="noopener noreferrer"
         onClick={(e) => e.stopPropagation()}
         className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-primary transition-colors mb-2"
       >
         <ExternalLink className="h-3 w-3" />
-        <span className="font-mono truncate">{project.lastCommitHash}</span>
-        <span className="mx-1">·</span>
-        <span className="truncate">{project.lastCommitMessage}</span>
+        <span className="font-mono truncate">{repo.full_name}</span>
       </a>
 
-      {/* Branch + path */}
+      {/* Branch */}
       <div className="flex items-center gap-4 text-xs text-muted-foreground mb-4">
         <span className="flex items-center gap-1">
           <GitBranch className="h-3 w-3" />
-          {project.branch}
-        </span>
-        <span className="flex items-center gap-1 truncate">
-          <FolderOpen className="h-3 w-3" />
-          <span className="font-mono truncate">{project.localPath}</span>
+          {repo.default_branch}
         </span>
       </div>
 
@@ -80,7 +71,7 @@ export function ProjectCard({ project, onClick }: ProjectCardProps) {
               <Button
                 size="sm"
                 className="flex-1 gap-1.5 text-xs h-8 bg-info hover:bg-info/80 text-info-foreground"
-                onClick={() => toast.success("Opening in VS Code...", { description: project.localPath })}
+                onClick={() => toast.success("Opening in VS Code...", { description: repo.name })}
               >
                 <FolderOpen className="h-3.5 w-3.5" />
                 Open in VS Code
@@ -105,10 +96,10 @@ export function ProjectCard({ project, onClick }: ProjectCardProps) {
         </TooltipProvider>
       </div>
 
-      {/* Last synced */}
+      {/* Last pushed */}
       <div className="flex items-center gap-1 text-[11px] text-muted-foreground">
         <Clock className="h-3 w-3" />
-        <span>Last synced {project.lastModified}</span>
+        <span>Updated {pushedAgo}</span>
       </div>
     </div>
   );

@@ -5,18 +5,53 @@ interface GitHubUser {
   avatar_url: string;
 }
 
-interface GitHubUserContextType {
+export interface GitHubRepo {
+  id: number;
+  name: string;
+  full_name: string;
+  description: string | null;
+  language: string | null;
+  stargazers_count: number;
+  pushed_at: string;
+  html_url: string;
+  default_branch: string;
+}
+
+interface GitHubContextType {
   user: GitHubUser | null;
+  repos: GitHubRepo[];
   loading: boolean;
+  reposLoading: boolean;
+  reposError: string;
   fetchUser: (token: string) => Promise<{ success: boolean; error?: string }>;
   clearUser: () => void;
 }
 
-const GitHubUserContext = createContext<GitHubUserContextType | null>(null);
+const GitHubUserContext = createContext<GitHubContextType | null>(null);
 
 export function GitHubUserProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<GitHubUser | null>(null);
+  const [repos, setRepos] = useState<GitHubRepo[]>([]);
   const [loading, setLoading] = useState(false);
+  const [reposLoading, setReposLoading] = useState(false);
+  const [reposError, setReposError] = useState("");
+
+  const fetchRepos = useCallback(async (token: string) => {
+    setReposLoading(true);
+    setReposError("");
+    try {
+      const res = await fetch("https://api.github.com/user/repos?sort=pushed&per_page=50", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) throw new Error("Failed");
+      const data: GitHubRepo[] = await res.json();
+      setRepos(data);
+    } catch {
+      setReposError("Could not connect to GitHub. Check your token in Settings.");
+    } finally {
+      setReposLoading(false);
+    }
+  }, []);
 
   const fetchUser = useCallback(async (token: string): Promise<{ success: boolean; error?: string }> => {
     setLoading(true);
@@ -31,6 +66,7 @@ export function GitHubUserProvider({ children }: { children: ReactNode }) {
       const data = await res.json();
       setUser({ login: data.login, avatar_url: data.avatar_url });
       localStorage.setItem("devhub_github_token", token);
+      fetchRepos(token);
       return { success: true };
     } catch {
       setUser(null);
@@ -38,10 +74,11 @@ export function GitHubUserProvider({ children }: { children: ReactNode }) {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [fetchRepos]);
 
   const clearUser = useCallback(() => {
     setUser(null);
+    setRepos([]);
     localStorage.removeItem("devhub_github_token");
   }, []);
 
@@ -54,7 +91,7 @@ export function GitHubUserProvider({ children }: { children: ReactNode }) {
   }, [fetchUser]);
 
   return (
-    <GitHubUserContext.Provider value={{ user, loading, fetchUser, clearUser }}>
+    <GitHubUserContext.Provider value={{ user, repos, loading, reposLoading, reposError, fetchUser, clearUser }}>
       {children}
     </GitHubUserContext.Provider>
   );
