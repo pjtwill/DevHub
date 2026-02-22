@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { X, GitBranch, FolderOpen, ArrowUpDown, ExternalLink, Pencil, Star } from "lucide-react";
+import { X, GitBranch, FolderOpen, ArrowUpDown, ExternalLink, Pencil, Star, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { type GitHubRepo } from "@/contexts/GitHubUserContext";
@@ -8,6 +8,7 @@ import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
 import { EditRepoModal } from "@/components/EditRepoModal";
+import { DeleteRepoModal } from "@/components/DeleteRepoModal";
 
 interface ProjectDetailPanelProps {
   repo: GitHubRepo | null;
@@ -17,6 +18,7 @@ interface ProjectDetailPanelProps {
 export function ProjectDetailPanel({ repo, onClose }: ProjectDetailPanelProps) {
   const [closing, setClosing] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
 
   useEffect(() => {
     if (repo) {
@@ -187,16 +189,37 @@ export function ProjectDetailPanel({ repo, onClose }: ProjectDetailPanelProps) {
         </div>
 
         {/* Footer */}
-        <div className="px-5 py-3 border-t border-border">
+        <div className="px-5 py-3 border-t border-border flex items-center justify-between">
           <p className="text-xs text-muted-foreground font-mono truncate">
             {repo.full_name}
           </p>
+          <Button
+            size="sm"
+            variant="destructive"
+            className="gap-1.5 text-xs h-8"
+            onClick={() => setDeleteOpen(true)}
+          >
+            <Trash2 className="h-3.5 w-3.5" />
+            Delete
+          </Button>
         </div>
       </div>
 
       {/* Edit Modal */}
       {editOpen && (
         <EditRepoModal repo={repo} open={editOpen} onClose={() => setEditOpen(false)} />
+      )}
+
+      {/* Delete Modal */}
+      {deleteOpen && (
+        <DeleteRepoModal
+          repo={repo}
+          open={deleteOpen}
+          onClose={() => setDeleteOpen(false)}
+          onDeleted={() => {
+            handleClose();
+          }}
+        />
       )}
     </>
   );
