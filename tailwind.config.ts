@@ -104,6 +104,10 @@ export default {
           from: { transform: "translateX(0)" },
           to: { transform: "translateX(100%)" },
         },
+        "scale-in": {
+          from: { opacity: "0", transform: "translate(-50%, 0) scale(0.96)" },
+          to: { opacity: "1", transform: "translate(-50%, 0) scale(1)" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
@@ -112,6 +116,7 @@ export default {
         "pulse-dot": "pulse-dot 2s ease-in-out infinite",
         "slide-in-right": "slide-in-right 0.25s ease-out",
         "slide-out-right": "slide-out-right 0.2s ease-in",
+        "scale-in": "scale-in 0.15s ease-out",
       },
     },
   },
