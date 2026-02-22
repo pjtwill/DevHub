@@ -1,21 +1,24 @@
-import { Search, Plus, Github } from "lucide-react";
+import { Search, Plus, Github, Command } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 
 interface TopBarProps {
   onAddProject?: () => void;
+  onOpenCommand?: () => void;
 }
 
-export function TopBar({ onAddProject }: TopBarProps) {
+export function TopBar({ onAddProject, onOpenCommand }: TopBarProps) {
   return (
     <header className="h-14 border-b border-border flex items-center justify-between px-6 bg-background/80 backdrop-blur-sm sticky top-0 z-20">
-      <div className="relative w-72">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-        <Input
-          placeholder="Search projects..."
-          className="pl-9 bg-secondary border-border h-9 text-sm placeholder:text-muted-foreground"
-        />
-      </div>
+      <button
+        onClick={onOpenCommand}
+        className="relative w-72 flex items-center gap-2 h-9 px-3 rounded-md bg-secondary border border-border text-sm text-muted-foreground hover:text-foreground hover:border-primary/30 transition-colors cursor-pointer"
+      >
+        <Search className="h-4 w-4 flex-shrink-0" />
+        <span className="flex-1 text-left">Search or jump to...</span>
+        <kbd className="hidden sm:inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-background border border-border text-[10px] font-mono text-muted-foreground">
+          <Command className="h-2.5 w-2.5" />K
+        </kbd>
+      </button>
       <div className="flex items-center gap-3">
         <div className="flex items-center gap-2 px-3 py-1.5 rounded-md bg-success/10 border border-success/20">
           <Github className="h-3.5 w-3.5 text-success" />
