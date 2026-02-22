@@ -11,6 +11,7 @@ import { formatDistanceToNow } from "date-fns";
 import { EditRepoModal } from "@/components/EditRepoModal";
 import { DeleteRepoModal } from "@/components/DeleteRepoModal";
 import { IssuesTab } from "@/components/IssuesTab";
+import { PullRequestsTab } from "@/components/PullRequestsTab";
 
 interface ProjectDetailPanelProps {
   repo: GitHubRepo | null;
@@ -156,6 +157,7 @@ export function ProjectDetailPanel({ repo, onClose }: ProjectDetailPanelProps) {
             <TabsList className="h-8 w-full">
               <TabsTrigger value="overview" className="text-xs flex-1">Overview</TabsTrigger>
               <TabsTrigger value="issues" className="text-xs flex-1">Issues</TabsTrigger>
+              <TabsTrigger value="prs" className="text-xs flex-1">PRs</TabsTrigger>
             </TabsList>
           </div>
 
@@ -202,6 +204,12 @@ export function ProjectDetailPanel({ repo, onClose }: ProjectDetailPanelProps) {
           <TabsContent value="issues" className="flex-1 overflow-y-auto px-5 pb-5 mt-0">
             <div className="pt-3">
               <IssuesTab owner={repo.full_name.split("/")[0]} repo={repo.name} />
+            </div>
+          </TabsContent>
+
+          <TabsContent value="prs" className="flex-1 overflow-y-auto px-5 pb-5 mt-0">
+            <div className="pt-3">
+              <PullRequestsTab owner={repo.full_name.split("/")[0]} repo={repo.name} />
             </div>
           </TabsContent>
         </Tabs>
