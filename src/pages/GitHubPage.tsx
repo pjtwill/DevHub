@@ -7,17 +7,7 @@ import { EmptyState } from "@/components/EmptyState";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
-
-interface GitHubRepo {
-  id: number;
-  name: string;
-  full_name: string;
-  description: string | null;
-  language: string | null;
-  stargazers_count: number;
-  pushed_at: string;
-  html_url: string;
-}
+import { useGitHubUser } from "@/contexts/GitHubUserContext";
 
 function RepoSkeleton() {
   return (
@@ -38,34 +28,9 @@ function RepoSkeleton() {
 
 export default function GitHubPage() {
   const navigate = useNavigate();
-  const [repos, setRepos] = useState<GitHubRepo[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
+  const { repos, reposLoading, reposError } = useGitHubUser();
 
   const token = localStorage.getItem("devhub_github_token");
-
-  useEffect(() => {
-    if (!token) {
-      setLoading(false);
-      return;
-    }
-
-    fetch("https://api.github.com/user/repos?sort=pushed&per_page=50", {
-      headers: { Authorization: `Bearer ${token}` },
-    })
-      .then((res) => {
-        if (!res.ok) throw new Error("Failed");
-        return res.json();
-      })
-      .then((data: GitHubRepo[]) => {
-        setRepos(data);
-        setLoading(false);
-      })
-      .catch(() => {
-        setError("Could not connect to GitHub. Check your token in Settings.");
-        setLoading(false);
-      });
-  }, [token]);
 
   if (!token) {
     return (
@@ -87,10 +52,10 @@ export default function GitHubPage() {
     <div className="space-y-6 max-w-4xl">
       <h1 className="text-lg font-semibold text-foreground">GitHub Repositories</h1>
 
-      {error && (
+      {reposError && (
         <div className="flex items-center gap-2 p-4 rounded-lg border border-destructive/30 bg-destructive/5 text-destructive text-sm">
           <AlertCircle className="h-4 w-4 flex-shrink-0" />
-          <span>{error}</span>
+          <span>{reposError}</span>
           <Button size="sm" variant="outline" className="ml-auto text-xs" onClick={() => navigate("/settings")}>
             Go to Settings
           </Button>
@@ -98,7 +63,7 @@ export default function GitHubPage() {
       )}
 
       <div className="bg-card border border-border rounded-lg divide-y divide-border">
-        {loading
+        {reposLoading
           ? Array.from({ length: 6 }).map((_, i) => <RepoSkeleton key={i} />)
           : repos.map((repo, index) => {
               const lang = repo.language ? getLanguageConfig(repo.language) : null;
@@ -153,7 +118,7 @@ export default function GitHubPage() {
                 </div>
               );
             })}
-        {!loading && !error && repos.length === 0 && (
+        {!reposLoading && !reposError && repos.length === 0 && (
           <div className="px-5 py-12">
             <EmptyState
               icon={Github}

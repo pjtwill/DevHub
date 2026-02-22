@@ -1,38 +1,23 @@
 import { useState } from "react";
 import { LayoutGrid, List, GitBranch, FolderOpen, ArrowUpDown, Plus, FolderKanban, Github } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { mockProjects } from "@/data/mockData";
 import { ProjectCard } from "@/components/ProjectCard";
-import { ProjectDetailPanel } from "@/components/ProjectDetailPanel";
 import { EmptyState } from "@/components/EmptyState";
-import { SyncStatus, Project } from "@/data/types";
 import { getLanguageConfig } from "@/lib/languages";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
+import { useGitHubUser, type GitHubRepo } from "@/contexts/GitHubUserContext";
+import { formatDistanceToNow } from "date-fns";
 
-const languages = ["All", "React", "Node", "Python"];
-const statuses: { label: string; value: SyncStatus | "all" }[] = [
-  { label: "All", value: "all" },
-  { label: "Synced", value: "synced" },
-  { label: "Uncommitted", value: "uncommitted" },
-  { label: "Behind", value: "behind" },
-];
-
-const statusConfig = {
-  synced: { label: "Synced", className: "bg-success" },
-  uncommitted: { label: "Uncommitted", className: "bg-warning" },
-  behind: { label: "Behind", className: "bg-destructive" },
-};
-
-function ProjectRow({ project, onClick, style }: { project: Project; onClick: () => void; style?: React.CSSProperties }) {
-  const lang = getLanguageConfig(project.language);
-  const status = statusConfig[project.syncStatus];
+function RepoRow({ repo, style }: { repo: GitHubRepo; style?: React.CSSProperties }) {
+  const lang = getLanguageConfig(repo.language || "");
+  const pushedAgo = formatDistanceToNow(new Date(repo.pushed_at), { addSuffix: true });
 
   return (
     <div
       className="flex items-center gap-4 px-5 py-3 hover:bg-surface-hover transition-colors cursor-pointer animate-fade-in"
-      onClick={onClick}
       style={style}
     >
       <div
@@ -42,28 +27,24 @@ function ProjectRow({ project, onClick, style }: { project: Project; onClick: ()
         {lang.icon}
       </div>
       <div className="w-36 flex-shrink-0">
-        <span className="text-sm font-medium text-foreground">{project.name}</span>
-        <span className="block text-xs text-muted-foreground">{project.language}</span>
+        <span className="text-sm font-medium text-foreground">{repo.name}</span>
+        {repo.language && <span className="block text-xs text-muted-foreground">{repo.language}</span>}
       </div>
       <span className="flex items-center gap-1 text-xs text-muted-foreground w-28 flex-shrink-0">
         <GitBranch className="h-3 w-3" />
-        {project.branch}
+        {repo.default_branch}
       </span>
-      <div className="flex items-center gap-1.5 text-xs text-muted-foreground flex-1 min-w-0 truncate">
-        <span className="font-mono">{project.lastCommitHash}</span>
-        <span className="mx-0.5">·</span>
-        <span className="truncate">{project.lastCommitMessage}</span>
+      <div className="flex-1 min-w-0 text-xs text-muted-foreground truncate">
+        {repo.description || <span className="italic">No description</span>}
       </div>
-      <span className="text-xs text-muted-foreground w-16 text-right flex-shrink-0">{project.lastCommitTime}</span>
-      <div className="flex items-center gap-1.5 w-28 flex-shrink-0">
-        <span className={cn("w-2 h-2 rounded-full animate-pulse-dot", status.className)} />
-        <span className="text-xs text-muted-foreground">{status.label}</span>
-      </div>
+      <span className="text-xs text-muted-foreground w-32 text-right flex-shrink-0">
+        Updated {pushedAgo}
+      </span>
       <div className="flex gap-1.5 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
         <Button
           size="sm"
           className="gap-1 text-xs h-7 px-2.5 bg-info hover:bg-info/80 text-info-foreground"
-          onClick={() => toast.success("Opening in VS Code...", { description: project.localPath })}
+          onClick={() => toast.success("Opening in VS Code...", { description: repo.name })}
         >
           <FolderOpen className="h-3 w-3" />
           VS Code
@@ -81,17 +62,36 @@ function ProjectRow({ project, onClick, style }: { project: Project; onClick: ()
   );
 }
 
+function CardSkeleton() {
+  return (
+    <div className="bg-card border border-border rounded-lg p-5 space-y-3">
+      <div className="flex items-center gap-3">
+        <Skeleton className="w-9 h-9 rounded-md" />
+        <div className="space-y-1">
+          <Skeleton className="h-4 w-28" />
+          <Skeleton className="h-3 w-16" />
+        </div>
+      </div>
+      <Skeleton className="h-3 w-full" />
+      <Skeleton className="h-3 w-40" />
+      <div className="flex gap-2">
+        <Skeleton className="h-8 flex-1" />
+        <Skeleton className="h-8 flex-1" />
+      </div>
+    </div>
+  );
+}
+
 export default function Projects() {
   const [langFilter, setLangFilter] = useState("All");
-  const [statusFilter, setStatusFilter] = useState<SyncStatus | "all">("all");
   const [view, setView] = useState<"grid" | "list">("grid");
-  const [selectedProject, setSelectedProject] = useState<Project | null>(null);
-
   const navigate = useNavigate();
+  const { repos, reposLoading } = useGitHubUser();
 
-  const filtered = mockProjects.filter((p) => {
-    if (langFilter !== "All" && p.language !== langFilter) return false;
-    if (statusFilter !== "all" && p.syncStatus !== statusFilter) return false;
+  const languages = ["All", ...Array.from(new Set(repos.map((r) => r.language).filter(Boolean) as string[]))];
+
+  const filtered = repos.filter((r) => {
+    if (langFilter !== "All" && r.language !== langFilter) return false;
     return true;
   });
 
@@ -100,36 +100,23 @@ export default function Projects() {
       <div className="flex items-center justify-between">
         <h1 className="text-lg font-semibold text-foreground">Projects</h1>
         <div className="flex items-center gap-3">
-          <div className="flex bg-secondary rounded-md p-0.5">
-            {languages.map((l) => (
-              <button
-                key={l}
-                onClick={() => setLangFilter(l)}
-                className={`px-3 py-1 text-xs font-medium rounded transition-colors ${
-                  langFilter === l
-                    ? "bg-primary text-primary-foreground"
-                    : "text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                {l}
-              </button>
-            ))}
-          </div>
-          <div className="flex bg-secondary rounded-md p-0.5">
-            {statuses.map((s) => (
-              <button
-                key={s.value}
-                onClick={() => setStatusFilter(s.value)}
-                className={`px-3 py-1 text-xs font-medium rounded transition-colors ${
-                  statusFilter === s.value
-                    ? "bg-primary text-primary-foreground"
-                    : "text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                {s.label}
-              </button>
-            ))}
-          </div>
+          {languages.length > 1 && (
+            <div className="flex bg-secondary rounded-md p-0.5">
+              {languages.map((l) => (
+                <button
+                  key={l}
+                  onClick={() => setLangFilter(l!)}
+                  className={`px-3 py-1 text-xs font-medium rounded transition-colors ${
+                    langFilter === l
+                      ? "bg-primary text-primary-foreground"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  {l}
+                </button>
+              ))}
+            </div>
+          )}
           <div className="flex bg-secondary rounded-md p-0.5">
             <button
               onClick={() => setView("grid")}
@@ -155,19 +142,25 @@ export default function Projects() {
         </div>
       </div>
 
-      {filtered.length > 0 ? (
+      {reposLoading ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <CardSkeleton key={i} />
+          ))}
+        </div>
+      ) : filtered.length > 0 ? (
         view === "grid" ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {filtered.map((p, i) => (
-              <div key={p.id} className="animate-fade-in" style={{ animationDelay: `${i * 50}ms`, animationFillMode: "backwards" }}>
-                <ProjectCard project={p} onClick={() => setSelectedProject(p)} />
+            {filtered.map((r, i) => (
+              <div key={r.id} className="animate-fade-in" style={{ animationDelay: `${i * 50}ms`, animationFillMode: "backwards" }}>
+                <ProjectCard repo={r} />
               </div>
             ))}
           </div>
         ) : (
           <div className="bg-card border border-border rounded-lg divide-y divide-border overflow-hidden">
-            {filtered.map((p, i) => (
-              <ProjectRow key={p.id} project={p} onClick={() => setSelectedProject(p)} style={{ animationDelay: `${i * 50}ms`, animationFillMode: "backwards" }} />
+            {filtered.map((r, i) => (
+              <RepoRow key={r.id} repo={r} style={{ animationDelay: `${i * 50}ms`, animationFillMode: "backwards" }} />
             ))}
           </div>
         )
@@ -183,8 +176,6 @@ export default function Projects() {
           ]}
         />
       )}
-
-      <ProjectDetailPanel project={selectedProject} onClose={() => setSelectedProject(null)} />
     </div>
   );
 }
