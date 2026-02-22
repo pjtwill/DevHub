@@ -15,6 +15,9 @@ export interface GitHubRepo {
   pushed_at: string;
   html_url: string;
   default_branch: string;
+  private: boolean;
+  open_issues_count: number;
+  has_issues: boolean;
 }
 
 interface GitHubContextType {
