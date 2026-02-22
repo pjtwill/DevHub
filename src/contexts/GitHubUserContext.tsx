@@ -25,6 +25,7 @@ interface GitHubContextType {
   reposError: string;
   fetchUser: (token: string) => Promise<{ success: boolean; error?: string }>;
   clearUser: () => void;
+  refreshRepos: () => void;
 }
 
 const GitHubUserContext = createContext<GitHubContextType | null>(null);
@@ -82,6 +83,11 @@ export function GitHubUserProvider({ children }: { children: ReactNode }) {
     localStorage.removeItem("devhub_github_token");
   }, []);
 
+  const refreshRepos = useCallback(() => {
+    const token = localStorage.getItem("devhub_github_token");
+    if (token) fetchRepos(token);
+  }, [fetchRepos]);
+
   // Restore on mount
   useEffect(() => {
     const saved = localStorage.getItem("devhub_github_token");
@@ -91,7 +97,7 @@ export function GitHubUserProvider({ children }: { children: ReactNode }) {
   }, [fetchUser]);
 
   return (
-    <GitHubUserContext.Provider value={{ user, repos, loading, reposLoading, reposError, fetchUser, clearUser }}>
+    <GitHubUserContext.Provider value={{ user, repos, loading, reposLoading, reposError, fetchUser, clearUser, refreshRepos }}>
       {children}
     </GitHubUserContext.Provider>
   );

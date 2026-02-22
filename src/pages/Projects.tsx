@@ -1,7 +1,8 @@
 import { useState } from "react";
-import { LayoutGrid, List, GitBranch, FolderOpen, ArrowUpDown, Plus, FolderKanban, Github } from "lucide-react";
+import { LayoutGrid, List, GitBranch, FolderOpen, ArrowUpDown, Plus, FolderKanban } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { ProjectCard } from "@/components/ProjectCard";
+import { ProjectDetailPanel } from "@/components/ProjectDetailPanel";
 import { EmptyState } from "@/components/EmptyState";
 import { getLanguageConfig } from "@/lib/languages";
 import { cn } from "@/lib/utils";
@@ -11,13 +12,14 @@ import { toast } from "sonner";
 import { useGitHubUser, type GitHubRepo } from "@/contexts/GitHubUserContext";
 import { formatDistanceToNow } from "date-fns";
 
-function RepoRow({ repo, style }: { repo: GitHubRepo; style?: React.CSSProperties }) {
+function RepoRow({ repo, onClick, style }: { repo: GitHubRepo; onClick: () => void; style?: React.CSSProperties }) {
   const lang = getLanguageConfig(repo.language || "");
   const pushedAgo = formatDistanceToNow(new Date(repo.pushed_at), { addSuffix: true });
 
   return (
     <div
       className="flex items-center gap-4 px-5 py-3 hover:bg-surface-hover transition-colors cursor-pointer animate-fade-in"
+      onClick={onClick}
       style={style}
     >
       <div
@@ -85,6 +87,7 @@ function CardSkeleton() {
 export default function Projects() {
   const [langFilter, setLangFilter] = useState("All");
   const [view, setView] = useState<"grid" | "list">("grid");
+  const [selectedRepo, setSelectedRepo] = useState<GitHubRepo | null>(null);
   const navigate = useNavigate();
   const { repos, reposLoading } = useGitHubUser();
 
@@ -153,14 +156,14 @@ export default function Projects() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {filtered.map((r, i) => (
               <div key={r.id} className="animate-fade-in" style={{ animationDelay: `${i * 50}ms`, animationFillMode: "backwards" }}>
-                <ProjectCard repo={r} />
+                <ProjectCard repo={r} onClick={() => setSelectedRepo(r)} />
               </div>
             ))}
           </div>
         ) : (
           <div className="bg-card border border-border rounded-lg divide-y divide-border overflow-hidden">
             {filtered.map((r, i) => (
-              <RepoRow key={r.id} repo={r} style={{ animationDelay: `${i * 50}ms`, animationFillMode: "backwards" }} />
+              <RepoRow key={r.id} repo={r} onClick={() => setSelectedRepo(r)} style={{ animationDelay: `${i * 50}ms`, animationFillMode: "backwards" }} />
             ))}
           </div>
         )
@@ -176,6 +179,8 @@ export default function Projects() {
           ]}
         />
       )}
+
+      <ProjectDetailPanel repo={selectedRepo} onClose={() => setSelectedRepo(null)} />
     </div>
   );
 }
