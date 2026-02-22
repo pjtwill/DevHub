@@ -1,73 +1,95 @@
-# Welcome to your Lovable project
+<div align="center">
 
-## Project info
+# 🛠️ DevHub
 
-**URL**: https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID
+**Your GitHub projects, all in one place.**
 
-## How can I edit this code?
+A dark, minimalist desktop-style app to manage your GitHub repositories — view status, handle branches, issues, PRs, and READMEs without ever leaving the app.
 
-There are several ways of editing your application.
+![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?style=for-the-badge&logo=typescript&logoColor=white)
+![React](https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)
+![GitHub API](https://img.shields.io/badge/GitHub_API-181717?style=for-the-badge&logo=github&logoColor=white)
 
-**Use Lovable**
+</div>
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and start prompting.
+---
 
-Changes made via Lovable will be committed automatically to this repo.
+## ✨ Features
 
-**Use your preferred IDE**
+- 📊 **Dashboard** — stats overview, commit heatmap, and recent activity feed
+- 📁 **Project Manager** — all your repos in one grid with real-time sync status
+- 🔀 **Branches** — view, create, and delete branches directly in the app
+- 🐛 **Issues** — open, close, and create issues without leaving DevHub
+- 🔁 **Pull Requests** — review and merge PRs with one click
+- 📝 **README Editor** — view and edit READMEs with markdown rendering
+- ⭐ **Starred Repos** — track your starred repositories and their updates
+- 🔔 **Notifications** — real-time GitHub notifications with mark-as-read
+- 📈 **Stats Page** — language breakdown, commit frequency, and repo growth charts
+- ⌨️ **Keyboard Shortcuts** — Cmd+K palette, Cmd+N new repo, and more
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+---
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+## 🚀 Getting Started
 
-Follow these steps:
+### 1. Clone the repository
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+```bash
+git clone https://github.com/pjtwill/DevHub.git
+cd DevHub
+```
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+### 2. Install dependencies
 
-# Step 3: Install the necessary dependencies.
-npm i
+```bash
+npm install
+```
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
+### 3. Run the app
+
+```bash
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+### 4. Connect your GitHub
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+- Go to **Settings** inside the app
+- Generate a [Personal Access Token](https://github.com/settings/tokens) (classic) with scopes: `repo`, `read:user`, `delete_repo`, `read:org`
+- Paste the token and click **Save Token**
 
-**Use GitHub Codespaces**
+---
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+## ⌨️ Keyboard Shortcuts
 
-## What technologies are used for this project?
+| Shortcut | Action |
+|---|---|
+| `Cmd/Ctrl + K` | Open command palette |
+| `Cmd/Ctrl + N` | New repository |
+| `Cmd/Ctrl + R` | Refresh data |
+| `G then D` | Go to Dashboard |
+| `G then P` | Go to Projects |
+| `G then H` | Go to GitHub |
+| `G then S` | Go to Settings |
+| `Escape` | Close modal / panel |
+| `?` | Show all shortcuts |
 
-This project is built with:
+---
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+## 🔒 Security Note
 
-## How can I deploy this project?
+Your GitHub token is stored locally in your browser's `localStorage` and is never sent to any external server other than the GitHub API directly. Do not share your app session with others while a token is active.
 
-Simply open [Lovable](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and click on Share -> Publish.
+---
 
-## Can I connect a custom domain to my Lovable project?
+## 🛣️ Roadmap
 
-Yes, you can!
+- [ ] Tauri integration for native desktop experience
+- [ ] Open projects directly in VS Code
+- [ ] Real `git status` via local file system
+- [ ] Desktop notifications for new PRs and issues
+- [ ] Multi-account GitHub support
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+---
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+## 📄 License
+
+MIT © [pjtwill](https://github.com/pjtwill) — **DevHub**
