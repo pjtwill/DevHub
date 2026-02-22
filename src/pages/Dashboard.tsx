@@ -1,17 +1,18 @@
+import { useState } from "react";
 import {
   FolderKanban,
   GitCommit,
   Activity,
-  Clock,
   ArrowRight,
   Inbox,
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { ProjectCard } from "@/components/ProjectCard";
+import { ProjectDetailPanel } from "@/components/ProjectDetailPanel";
 import { useCountUp } from "@/hooks/useCountUp";
 import { EmptyState } from "@/components/EmptyState";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useGitHubUser } from "@/contexts/GitHubUserContext";
+import { useGitHubUser, type GitHubRepo } from "@/contexts/GitHubUserContext";
 
 function AnimatedStat({ value }: { value: number }) {
   const animated = useCountUp(value);
@@ -20,6 +21,7 @@ function AnimatedStat({ value }: { value: number }) {
 
 export default function Dashboard() {
   const { repos, reposLoading } = useGitHubUser();
+  const [selectedRepo, setSelectedRepo] = useState<GitHubRepo | null>(null);
   const recentRepos = repos.slice(0, 3);
 
   const stats = [
@@ -98,7 +100,7 @@ export default function Dashboard() {
         ) : recentRepos.length > 0 ? (
           <div className="grid grid-cols-3 gap-4">
             {recentRepos.map((r) => (
-              <ProjectCard key={r.id} repo={r} />
+              <ProjectCard key={r.id} repo={r} onClick={() => setSelectedRepo(r)} />
             ))}
           </div>
         ) : (
@@ -111,7 +113,7 @@ export default function Dashboard() {
         )}
       </section>
 
-      {/* Recent Activity - placeholder */}
+      {/* Recent Activity */}
       <section>
         <h2 className="text-sm font-semibold text-foreground mb-4">
           Recent Activity
@@ -123,6 +125,8 @@ export default function Dashboard() {
           compact
         />
       </section>
+
+      <ProjectDetailPanel repo={selectedRepo} onClose={() => setSelectedRepo(null)} />
     </div>
   );
 }
