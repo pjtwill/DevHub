@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { ProjectCard } from "@/components/ProjectCard";
+import { CommitHeatmap } from "@/components/CommitHeatmap";
 import { ProjectDetailPanel } from "@/components/ProjectDetailPanel";
 import { useCountUp } from "@/hooks/useCountUp";
 import { EmptyState } from "@/components/EmptyState";
@@ -202,6 +203,9 @@ export default function Dashboard() {
           </div>
         ))}
       </div>
+
+      {/* Commit Heatmap */}
+      {user && <CommitHeatmap username={user.login} />}
 
       {/* Quick Access */}
       <section>
