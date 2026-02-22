@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { X, GitBranch, FolderOpen, ArrowUpDown, ExternalLink, Pencil, Star, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { type GitHubRepo } from "@/contexts/GitHubUserContext";
 import { getLanguageConfig } from "@/lib/languages";
@@ -9,6 +10,7 @@ import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
 import { EditRepoModal } from "@/components/EditRepoModal";
 import { DeleteRepoModal } from "@/components/DeleteRepoModal";
+import { IssuesTab } from "@/components/IssuesTab";
 
 interface ProjectDetailPanelProps {
   repo: GitHubRepo | null;
@@ -148,45 +150,61 @@ export function ProjectDetailPanel({ repo, onClose }: ProjectDetailPanelProps) {
           </TooltipProvider>
         </div>
 
-        {/* Details */}
-        <div className="flex-1 overflow-y-auto p-5 space-y-5">
-          {repo.description && (
-            <div>
-              <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1">Description</h3>
-              <p className="text-sm text-foreground">{repo.description}</p>
-            </div>
-          )}
-
-          <div className="grid grid-cols-2 gap-4">
-            <div className="bg-secondary/50 rounded-lg p-3">
-              <h3 className="text-xs text-muted-foreground mb-1">Default Branch</h3>
-              <p className="text-sm font-mono text-foreground flex items-center gap-1.5">
-                <GitBranch className="h-3.5 w-3.5 text-primary/70" />
-                {repo.default_branch}
-              </p>
-            </div>
-            <div className="bg-secondary/50 rounded-lg p-3">
-              <h3 className="text-xs text-muted-foreground mb-1">Last Pushed</h3>
-              <p className="text-sm text-foreground">Updated {pushedAgo}</p>
-            </div>
-            <div className="bg-secondary/50 rounded-lg p-3">
-              <h3 className="text-xs text-muted-foreground mb-1">Stars</h3>
-              <p className="text-sm text-foreground flex items-center gap-1.5">
-                <Star className="h-3.5 w-3.5 text-warning" />
-                {repo.stargazers_count}
-              </p>
-            </div>
-            {repo.language && (
-              <div className="bg-secondary/50 rounded-lg p-3">
-                <h3 className="text-xs text-muted-foreground mb-1">Language</h3>
-                <p className="text-sm text-foreground flex items-center gap-1.5">
-                  <span style={{ color: lang.color }}>{lang.icon}</span>
-                  {repo.language}
-                </p>
-              </div>
-            )}
+        {/* Tabbed Content */}
+        <Tabs defaultValue="overview" className="flex-1 flex flex-col overflow-hidden">
+          <div className="px-5 pt-3">
+            <TabsList className="h-8 w-full">
+              <TabsTrigger value="overview" className="text-xs flex-1">Overview</TabsTrigger>
+              <TabsTrigger value="issues" className="text-xs flex-1">Issues</TabsTrigger>
+            </TabsList>
           </div>
-        </div>
+
+          <TabsContent value="overview" className="flex-1 overflow-y-auto px-5 pb-5 mt-0">
+            <div className="space-y-5 pt-3">
+              {repo.description && (
+                <div>
+                  <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1">Description</h3>
+                  <p className="text-sm text-foreground">{repo.description}</p>
+                </div>
+              )}
+              <div className="grid grid-cols-2 gap-4">
+                <div className="bg-secondary/50 rounded-lg p-3">
+                  <h3 className="text-xs text-muted-foreground mb-1">Default Branch</h3>
+                  <p className="text-sm font-mono text-foreground flex items-center gap-1.5">
+                    <GitBranch className="h-3.5 w-3.5 text-primary/70" />
+                    {repo.default_branch}
+                  </p>
+                </div>
+                <div className="bg-secondary/50 rounded-lg p-3">
+                  <h3 className="text-xs text-muted-foreground mb-1">Last Pushed</h3>
+                  <p className="text-sm text-foreground">Updated {pushedAgo}</p>
+                </div>
+                <div className="bg-secondary/50 rounded-lg p-3">
+                  <h3 className="text-xs text-muted-foreground mb-1">Stars</h3>
+                  <p className="text-sm text-foreground flex items-center gap-1.5">
+                    <Star className="h-3.5 w-3.5 text-warning" />
+                    {repo.stargazers_count}
+                  </p>
+                </div>
+                {repo.language && (
+                  <div className="bg-secondary/50 rounded-lg p-3">
+                    <h3 className="text-xs text-muted-foreground mb-1">Language</h3>
+                    <p className="text-sm text-foreground flex items-center gap-1.5">
+                      <span style={{ color: lang.color }}>{lang.icon}</span>
+                      {repo.language}
+                    </p>
+                  </div>
+                )}
+              </div>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="issues" className="flex-1 overflow-y-auto px-5 pb-5 mt-0">
+            <div className="pt-3">
+              <IssuesTab owner={repo.full_name.split("/")[0]} repo={repo.name} />
+            </div>
+          </TabsContent>
+        </Tabs>
 
         {/* Footer */}
         <div className="px-5 py-3 border-t border-border flex items-center justify-between">
