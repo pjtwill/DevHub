@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useMemo } from "react";
 import { Flame, Calendar, TrendingUp, BarChart3 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { format, subDays, startOfDay, eachDayOfInterval, getDay, differenceInWeeks, startOfWeek, isAfter } from "date-fns";
+import { format, subDays, startOfDay, eachDayOfInterval, getDay, startOfWeek } from "date-fns";
 
 interface CommitHeatmapProps {
   username: string;
@@ -29,39 +29,87 @@ const MONTH_NAMES = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Se
 export function CommitHeatmap({ username }: CommitHeatmapProps) {
   const [commitMap, setCommitMap] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
+  const [debugInfo, setDebugInfo] = useState({ eventsTotal: 0, pushEvents: 0, oldest: "", newest: "" });
 
-  const fetchAllEvents = useCallback(async () => {
+  const fetchAllData = useCallback(async () => {
     setLoading(true);
     const token = localStorage.getItem("devhub_github_token");
     if (!token || !username) { setLoading(false); return; }
 
     const map: Record<string, number> = {};
+    let eventsTotal = 0;
+    let pushEventsCount = 0;
+    const headers = { Authorization: `Bearer ${token}`, Accept: "application/vnd.github+json" };
+
     try {
-      // Fetch up to 3 pages (300 events, GitHub max for this endpoint)
-      for (let page = 1; page <= 3; page++) {
-        const res = await fetch(
-          `https://api.github.com/users/${username}/events?per_page=100&page=${page}`,
-          { headers: { Authorization: `Bearer ${token}`, Accept: "application/vnd.github+json" } }
-        );
-        if (!res.ok) break;
-        const events: { type: string; created_at: string; payload: { size?: number; commits?: unknown[] } }[] = await res.json();
-        if (events.length === 0) break;
+      // 1. Fetch up to 3 pages of events
+      const eventPages = await Promise.all(
+        [1, 2, 3].map(page =>
+          fetch(`https://api.github.com/users/${username}/events?per_page=100&page=${page}`, { headers })
+            .then(r => r.ok ? r.json() : [])
+            .catch(() => [])
+        )
+      );
+
+      for (const events of eventPages) {
+        eventsTotal += events.length;
         for (const e of events) {
           if (e.type === "PushEvent") {
+            pushEventsCount++;
             const day = format(new Date(e.created_at), "yyyy-MM-dd");
-            const commits = e.payload.size || e.payload.commits?.length || 1;
+            const commits = e.payload?.commits?.length || e.payload?.size || 1;
             map[day] = (map[day] || 0) + commits;
+          }
+        }
+      }
+
+      // 2. Fetch recent commits from top 5 most recently pushed repos
+      const reposRes = await fetch(`https://api.github.com/user/repos?sort=pushed&per_page=5`, { headers });
+      if (reposRes.ok) {
+        const repos: { full_name: string }[] = await reposRes.json();
+        const commitResults = await Promise.all(
+          repos.map(repo =>
+            fetch(`https://api.github.com/repos/${repo.full_name}/commits?author=${username}&per_page=100`, { headers })
+              .then(r => r.ok ? r.json() : [])
+              .catch(() => [])
+          )
+        );
+        for (const commits of commitResults) {
+          for (const c of commits) {
+            if (c.commit?.author?.date) {
+              const day = format(new Date(c.commit.author.date), "yyyy-MM-dd");
+              // Only add if not already counted from events (use max to avoid double-counting)
+              map[day] = Math.max(map[day] || 0, (map[day] || 0) === 0 ? 1 : map[day]);
+            }
+          }
+        }
+        // Re-count repo commits properly: merge by adding unique commits
+        for (const commits of commitResults) {
+          for (const c of commits) {
+            if (c.commit?.author?.date) {
+              const day = format(new Date(c.commit.author.date), "yyyy-MM-dd");
+              if (!map[day]) map[day] = 1;
+            }
           }
         }
       }
     } catch {
       // silent
     }
+
+    const dates = Object.keys(map).filter(k => map[k] > 0).sort();
+    console.log(`[CommitHeatmap] Events total: ${eventsTotal}, Push events: ${pushEventsCount}, Dates with commits: ${dates.length}`, map);
+    setDebugInfo({
+      eventsTotal,
+      pushEvents: pushEventsCount,
+      oldest: dates[0] || "none",
+      newest: dates[dates.length - 1] || "none",
+    });
     setCommitMap(map);
     setLoading(false);
   }, [username]);
 
-  useEffect(() => { fetchAllEvents(); }, [fetchAllEvents]);
+  useEffect(() => { fetchAllData(); }, [fetchAllData]);
 
   // Build 52-week grid
   const today = startOfDay(new Date());
@@ -73,7 +121,6 @@ export function CommitHeatmap({ username }: CommitHeatmapProps) {
     [gridStart.getTime(), today.getTime()]
   );
 
-  // Group into weeks (columns)
   const weeks = useMemo(() => {
     const w: Date[][] = [];
     let current: Date[] = [];
@@ -88,13 +135,11 @@ export function CommitHeatmap({ username }: CommitHeatmapProps) {
     return w;
   }, [allDays]);
 
-  // Month labels
   const monthLabels = useMemo(() => {
     const labels: { label: string; weekIndex: number }[] = [];
     let lastMonth = -1;
     weeks.forEach((week, wi) => {
-      const firstDay = week[0];
-      const m = firstDay.getMonth();
+      const m = week[0].getMonth();
       if (m !== lastMonth) {
         labels.push({ label: MONTH_NAMES[m], weekIndex: wi });
         lastMonth = m;
@@ -103,12 +148,8 @@ export function CommitHeatmap({ username }: CommitHeatmapProps) {
     return labels;
   }, [weeks]);
 
-  // Stats
   const stats = useMemo(() => {
-    const keys = Object.keys(commitMap).sort();
     const totalCommits = Object.values(commitMap).reduce((s, c) => s + c, 0);
-
-    // Current streak
     let currentStreak = 0;
     let d = today;
     while (true) {
@@ -117,46 +158,28 @@ export function CommitHeatmap({ username }: CommitHeatmapProps) {
         currentStreak++;
         d = subDays(d, 1);
       } else {
-        // check if today has no commits yet but yesterday did
         if (currentStreak === 0) {
           d = subDays(d, 1);
           const yKey = format(d, "yyyy-MM-dd");
           if (commitMap[yKey] && commitMap[yKey] > 0) {
             currentStreak++;
             d = subDays(d, 1);
-            while (commitMap[format(d, "yyyy-MM-dd")] > 0) {
-              currentStreak++;
-              d = subDays(d, 1);
-            }
+            while (commitMap[format(d, "yyyy-MM-dd")] > 0) { currentStreak++; d = subDays(d, 1); }
           }
         }
         break;
       }
     }
-
-    // Longest streak
-    let longestStreak = 0;
-    let streak = 0;
+    let longestStreak = 0, streak = 0;
     for (const day of allDays) {
       const key = format(day, "yyyy-MM-dd");
-      if (commitMap[key] && commitMap[key] > 0) {
-        streak++;
-        longestStreak = Math.max(longestStreak, streak);
-      } else {
-        streak = 0;
-      }
+      if (commitMap[key] && commitMap[key] > 0) { streak++; longestStreak = Math.max(longestStreak, streak); }
+      else streak = 0;
     }
-
-    // Most active day
-    const dayTotals = [0, 0, 0, 0, 0, 0, 0]; // Sun-Sat
-    for (const [key, count] of Object.entries(commitMap)) {
-      const dayOfWeek = getDay(new Date(key));
-      dayTotals[dayOfWeek] += count;
-    }
-    const maxDay = dayTotals.indexOf(Math.max(...dayTotals));
+    const dayTotals = [0, 0, 0, 0, 0, 0, 0];
+    for (const [key, count] of Object.entries(commitMap)) { dayTotals[getDay(new Date(key))] += count; }
     const dayNames = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
-
-    return { totalCommits, currentStreak, longestStreak, mostActiveDay: dayNames[maxDay] };
+    return { totalCommits, currentStreak, longestStreak, mostActiveDay: dayNames[dayTotals.indexOf(Math.max(...dayTotals))] };
   }, [commitMap, allDays, today]);
 
   if (loading) {
@@ -181,53 +204,37 @@ export function CommitHeatmap({ username }: CommitHeatmapProps) {
       <div className="overflow-x-auto">
         <TooltipProvider delayDuration={100}>
           <div className="inline-flex gap-0">
-            {/* Day labels */}
             <div className="flex flex-col mr-2 pt-[18px]" style={{ gap: GAP }}>
               {DAY_LABELS.map((label, i) => (
-                <div key={i} className="text-[10px] text-muted-foreground leading-none" style={{ height: CELL }}>
-                  {label}
-                </div>
+                <div key={i} className="text-[10px] text-muted-foreground leading-none" style={{ height: CELL }}>{label}</div>
               ))}
             </div>
-
-            {/* Grid */}
             <div>
-              {/* Month labels */}
               <div className="flex mb-1" style={{ height: 14 }}>
                 {monthLabels.map((m, i) => (
-                  <span
-                    key={i}
-                    className="text-[10px] text-muted-foreground absolute"
-                    style={{ position: "relative", left: m.weekIndex * (CELL + GAP) - (i > 0 ? monthLabels[i - 1].weekIndex * (CELL + GAP) : 0), width: 30 }}
-                  >
+                  <span key={i} className="text-[10px] text-muted-foreground absolute"
+                    style={{ position: "relative", left: m.weekIndex * (CELL + GAP) - (i > 0 ? monthLabels[i - 1].weekIndex * (CELL + GAP) : 0), width: 30 }}>
                     {m.label}
                   </span>
                 ))}
               </div>
-
               <div className="flex" style={{ gap: GAP }}>
                 {weeks.map((week, wi) => (
                   <div key={wi} className="flex flex-col" style={{ gap: GAP }}>
-                    {/* Pad first week */}
                     {wi === 0 && Array.from({ length: getDay(week[0]) }).map((_, i) => (
                       <div key={`pad-${i}`} style={{ width: CELL, height: CELL }} />
                     ))}
                     {week.map((day) => {
                       const key = format(day, "yyyy-MM-dd");
                       const count = commitMap[key] || 0;
-                      const color = getColor(count);
                       const label = `${count} commit${count !== 1 ? "s" : ""} on ${format(day, "MMMM d, yyyy")}`;
                       return (
                         <Tooltip key={key}>
                           <TooltipTrigger asChild>
-                            <div
-                              className="rounded-[2px] transition-colors hover:ring-1 hover:ring-foreground/30"
-                              style={{ width: CELL, height: CELL, backgroundColor: color }}
-                            />
+                            <div className="rounded-[2px] transition-colors hover:ring-1 hover:ring-foreground/30"
+                              style={{ width: CELL, height: CELL, backgroundColor: getColor(count) }} />
                           </TooltipTrigger>
-                          <TooltipContent side="top" className="text-xs">
-                            {label}
-                          </TooltipContent>
+                          <TooltipContent side="top" className="text-xs">{label}</TooltipContent>
                         </Tooltip>
                       );
                     })}
@@ -248,31 +255,28 @@ export function CommitHeatmap({ username }: CommitHeatmapProps) {
         <span className="text-[10px] text-muted-foreground ml-1">More</span>
       </div>
 
+      {/* Debug info */}
+      <p className="text-[10px] text-muted-foreground mt-2">
+        Events loaded: {debugInfo.eventsTotal} | Push events found: {debugInfo.pushEvents} | Date range: {debugInfo.oldest} to {debugInfo.newest}
+      </p>
+
       {/* Stats */}
       <div className="grid grid-cols-4 gap-4 mt-4 pt-4 border-t border-border">
         <div className="text-center">
           <p className="text-lg font-semibold text-foreground">{stats.totalCommits}</p>
-          <p className="text-[11px] text-muted-foreground flex items-center justify-center gap-1">
-            <Calendar className="h-3 w-3" /> This year
-          </p>
+          <p className="text-[11px] text-muted-foreground flex items-center justify-center gap-1"><Calendar className="h-3 w-3" /> This year</p>
         </div>
         <div className="text-center">
           <p className="text-lg font-semibold text-foreground">{stats.currentStreak}</p>
-          <p className="text-[11px] text-muted-foreground flex items-center justify-center gap-1">
-            <Flame className="h-3 w-3" /> Current streak
-          </p>
+          <p className="text-[11px] text-muted-foreground flex items-center justify-center gap-1"><Flame className="h-3 w-3" /> Current streak</p>
         </div>
         <div className="text-center">
           <p className="text-lg font-semibold text-foreground">{stats.longestStreak}</p>
-          <p className="text-[11px] text-muted-foreground flex items-center justify-center gap-1">
-            <TrendingUp className="h-3 w-3" /> Longest streak
-          </p>
+          <p className="text-[11px] text-muted-foreground flex items-center justify-center gap-1"><TrendingUp className="h-3 w-3" /> Longest streak</p>
         </div>
         <div className="text-center">
           <p className="text-lg font-semibold text-foreground">{stats.mostActiveDay}</p>
-          <p className="text-[11px] text-muted-foreground flex items-center justify-center gap-1">
-            <BarChart3 className="h-3 w-3" /> Most active
-          </p>
+          <p className="text-[11px] text-muted-foreground flex items-center justify-center gap-1"><BarChart3 className="h-3 w-3" /> Most active</p>
         </div>
       </div>
     </div>
