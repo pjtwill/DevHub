@@ -22,7 +22,7 @@ export function ProjectCard({ project, onClick }: ProjectCardProps) {
 
   return (
     <div
-      className="group bg-card border border-border rounded-lg p-5 transition-all duration-200 hover:border-primary/30 hover:bg-surface-hover animate-fade-in cursor-pointer"
+      className="group bg-card border border-border rounded-lg p-5 transition-all duration-200 ease-out hover:border-primary/30 hover:bg-surface-hover hover:scale-[1.02] animate-fade-in cursor-pointer"
       onClick={onClick}
     >
       {/* Header */}
