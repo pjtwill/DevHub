@@ -48,21 +48,28 @@ export function CommitHeatmap({ username }: CommitHeatmapProps) {
     };
 
     try {
-      // 1. Fetch 3 pages of events
+      // 1. Fetch 3 pages of authenticated user events
       const eventPages = await Promise.all(
         [1, 2, 3].map(page =>
           fetch(`https://api.github.com/users/${username}/events?per_page=100&page=${page}`, { headers })
-            .then(r => {
-              if (!r.ok) throw new Error(`HTTP ${r.status}`);
-              return r.json();
-            })
+            .then(r => r.ok ? r.json() : [])
+            .catch(() => [])
+        )
+      );
+      const authEventPages = await Promise.all(
+        [1, 2, 3].map(page =>
+          fetch(`https://api.github.com/user/events?per_page=100&page=${page}`, { headers })
+            .then(r => r.ok ? r.json() : [])
             .catch(() => [])
         )
       );
 
-      const allEvents = (eventPages as any[][]).flat();
-      eventsTotal = allEvents.length;
-      const pushEvents = allEvents.filter(e => e.type === "PushEvent");
+      const allEvents = [...(eventPages as any[][]).flat(), ...(authEventPages as any[][]).flat()];
+      // Deduplicate by event id
+      const seen = new Set<string>();
+      const uniqueEvents = allEvents.filter(e => { if (seen.has(e.id)) return false; seen.add(e.id); return true; });
+      eventsTotal = uniqueEvents.length;
+      const pushEvents = uniqueEvents.filter(e => e.type === "PushEvent");
       pushEventsCount = pushEvents.length;
 
       pushEvents.forEach(event => {
@@ -74,7 +81,7 @@ export function CommitHeatmap({ username }: CommitHeatmapProps) {
       });
 
       // 2. Fetch recent commits from top 5 most recently pushed repos
-      const reposRes = await fetch(`https://api.github.com/user/repos?sort=pushed&per_page=5`, { headers });
+      const reposRes = await fetch(`https://api.github.com/user/repos?sort=pushed&per_page=10`, { headers });
       if (reposRes.ok) {
         const repos: { full_name: string }[] = await reposRes.json();
         const commitResults = await Promise.all(
