@@ -3,12 +3,26 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { Github, FolderOpen, Terminal } from "lucide-react";
+import { Github, FolderOpen, Terminal, Loader2 } from "lucide-react";
+import { useGitHubUser } from "@/contexts/GitHubUserContext";
 
 export default function SettingsPage() {
   const [token, setToken] = useState("");
   const [vscodePath, setVscodePath] = useState("code");
   const [projectsFolder, setProjectsFolder] = useState("~/projects");
+  const [tokenError, setTokenError] = useState("");
+  const { fetchUser, loading } = useGitHubUser();
+
+  const handleSaveToken = async () => {
+    setTokenError("");
+    const result = await fetchUser(token);
+    if (result.success) {
+      toast.success("GitHub token saved");
+      setToken("");
+    } else {
+      setTokenError(result.error || "Invalid token");
+    }
+  };
 
   return (
     <div className="space-y-8 max-w-xl">
@@ -28,19 +42,27 @@ export default function SettingsPage() {
             id="token"
             type="password"
             value={token}
-            onChange={(e) => setToken(e.target.value)}
+            onChange={(e) => {
+              setToken(e.target.value);
+              setTokenError("");
+            }}
             placeholder="ghp_xxxxxxxxxxxxxxxxxxxx"
-            className="bg-secondary border-border font-mono text-sm"
+            className={`bg-secondary border-border font-mono text-sm ${tokenError ? "border-destructive focus-visible:ring-destructive" : ""}`}
           />
-          <p className="text-xs text-muted-foreground">
-            Generate a token at GitHub → Settings → Developer settings → Personal access tokens
-          </p>
+          {tokenError ? (
+            <p className="text-xs text-destructive font-medium">{tokenError}</p>
+          ) : (
+            <p className="text-xs text-muted-foreground">
+              Generate a token at GitHub → Settings → Developer settings → Personal access tokens
+            </p>
+          )}
         </div>
         <Button
           size="sm"
-          onClick={() => toast.success("GitHub token saved")}
-          disabled={!token}
+          onClick={handleSaveToken}
+          disabled={!token || loading}
         >
+          {loading && <Loader2 className="h-3 w-3 mr-2 animate-spin" />}
           Save Token
         </Button>
       </section>

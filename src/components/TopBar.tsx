@@ -1,5 +1,7 @@
 import { Search, Plus, Github, Command } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { useGitHubUser } from "@/contexts/GitHubUserContext";
 
 interface TopBarProps {
   onAddProject?: () => void;
@@ -7,6 +9,8 @@ interface TopBarProps {
 }
 
 export function TopBar({ onAddProject, onOpenCommand }: TopBarProps) {
+  const { user } = useGitHubUser();
+
   return (
     <header className="h-14 border-b border-border flex items-center justify-between px-6 bg-background/80 backdrop-blur-sm sticky top-0 z-20 mt-[2px]">
       <button
@@ -27,6 +31,18 @@ export function TopBar({ onAddProject, onOpenCommand }: TopBarProps) {
           </span>
           <Github className="h-3.5 w-3.5 text-success" />
           <span className="text-xs font-medium text-success">Connected</span>
+          {user && (
+            <>
+              <span className="text-success/40">·</span>
+              <Avatar className="h-5 w-5">
+                <AvatarImage src={user.avatar_url} alt={user.login} />
+                <AvatarFallback className="text-[8px] bg-success/20 text-success">
+                  {user.login.slice(0, 2).toUpperCase()}
+                </AvatarFallback>
+              </Avatar>
+              <span className="text-xs font-medium text-success">{user.login}</span>
+            </>
+          )}
         </div>
         <Button size="sm" className="gap-2" onClick={onAddProject}>
           <Plus className="h-4 w-4" />
