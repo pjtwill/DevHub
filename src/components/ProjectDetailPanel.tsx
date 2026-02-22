@@ -13,6 +13,7 @@ import { DeleteRepoModal } from "@/components/DeleteRepoModal";
 import { IssuesTab } from "@/components/IssuesTab";
 import { PullRequestsTab } from "@/components/PullRequestsTab";
 import { BranchesTab } from "@/components/BranchesTab";
+import { ReadmeTab } from "@/components/ReadmeTab";
 
 interface ProjectDetailPanelProps {
   repo: GitHubRepo | null;
@@ -160,6 +161,7 @@ export function ProjectDetailPanel({ repo, onClose }: ProjectDetailPanelProps) {
               <TabsTrigger value="issues" className="text-xs flex-1">Issues</TabsTrigger>
               <TabsTrigger value="prs" className="text-xs flex-1">PRs</TabsTrigger>
               <TabsTrigger value="branches" className="text-xs flex-1">Branches</TabsTrigger>
+              <TabsTrigger value="readme" className="text-xs flex-1">README</TabsTrigger>
             </TabsList>
           </div>
 
@@ -218,6 +220,12 @@ export function ProjectDetailPanel({ repo, onClose }: ProjectDetailPanelProps) {
           <TabsContent value="branches" className="flex-1 overflow-y-auto px-5 pb-5 mt-0">
             <div className="pt-3">
               <BranchesTab owner={repo.full_name.split("/")[0]} repo={repo.name} defaultBranch={repo.default_branch} />
+            </div>
+          </TabsContent>
+
+          <TabsContent value="readme" className="flex-1 overflow-y-auto px-5 pb-5 mt-0">
+            <div className="pt-3">
+              <ReadmeTab owner={repo.full_name.split("/")[0]} repo={repo.name} />
             </div>
           </TabsContent>
         </Tabs>

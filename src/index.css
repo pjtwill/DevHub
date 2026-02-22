@@ -78,3 +78,60 @@
     @apply bg-clip-text text-transparent bg-gradient-to-r from-primary to-[hsl(280,84%,67%)];
   }
 }
+
+/* README markdown styling */
+.readme-content h1,
+.readme-content h2,
+.readme-content h3,
+.readme-content h4,
+.readme-content h5,
+.readme-content h6 {
+  color: hsl(var(--foreground));
+  font-weight: 600;
+  margin-top: 1.25em;
+  margin-bottom: 0.5em;
+}
+.readme-content h1 { font-size: 1.5rem; border-bottom: 1px solid hsl(var(--border)); padding-bottom: 0.3em; }
+.readme-content h2 { font-size: 1.25rem; border-bottom: 1px solid hsl(var(--border)); padding-bottom: 0.3em; }
+.readme-content h3 { font-size: 1.1rem; }
+.readme-content p { margin: 0.75em 0; color: hsl(var(--foreground) / 0.85); line-height: 1.7; }
+.readme-content a { color: hsl(var(--primary)); text-decoration: underline; text-underline-offset: 2px; }
+.readme-content a:hover { opacity: 0.8; }
+.readme-content code {
+  background: hsl(0 0% 10%);
+  padding: 0.15em 0.4em;
+  border-radius: 4px;
+  font-size: 0.85em;
+  font-family: 'JetBrains Mono', monospace;
+}
+.readme-content pre {
+  background: hsl(0 0% 10%);
+  border: 1px solid hsl(var(--border));
+  border-radius: 6px;
+  padding: 1em;
+  overflow-x: auto;
+  margin: 1em 0;
+}
+.readme-content pre code {
+  background: none;
+  padding: 0;
+  font-size: 0.85em;
+}
+.readme-content ul, .readme-content ol { padding-left: 1.5em; margin: 0.5em 0; color: hsl(var(--foreground) / 0.85); }
+.readme-content li { margin: 0.25em 0; }
+.readme-content blockquote {
+  border-left: 3px solid hsl(var(--primary));
+  padding-left: 1em;
+  margin: 1em 0;
+  color: hsl(var(--muted-foreground));
+}
+.readme-content img { max-width: 100%; border-radius: 6px; margin: 0.5em 0; }
+.readme-content hr { border-color: hsl(var(--border)); margin: 1.5em 0; }
+.readme-content table { width: 100%; border-collapse: collapse; margin: 1em 0; }
+.readme-content th, .readme-content td {
+  border: 1px solid hsl(var(--border));
+  padding: 0.5em 0.75em;
+  text-align: left;
+  font-size: 0.875rem;
+}
+.readme-content th { background: hsl(var(--secondary)); color: hsl(var(--foreground)); font-weight: 600; }
