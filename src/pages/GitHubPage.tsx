@@ -1,18 +1,73 @@
-import { useState } from "react";
-import { mockRepos } from "@/data/mockData";
+import { useState, useEffect } from "react";
 import { getLanguageConfig } from "@/lib/languages";
-import { Star, Link as LinkIcon, ExternalLink, Github } from "lucide-react";
+import { Star, Link as LinkIcon, ExternalLink, Github, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/EmptyState";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
+import { formatDistanceToNow } from "date-fns";
+
+interface GitHubRepo {
+  id: number;
+  name: string;
+  full_name: string;
+  description: string | null;
+  language: string | null;
+  stargazers_count: number;
+  pushed_at: string;
+  html_url: string;
+}
+
+function RepoSkeleton() {
+  return (
+    <div className="flex items-center justify-between px-5 py-4">
+      <div className="flex-1 space-y-2">
+        <Skeleton className="h-4 w-48" />
+        <Skeleton className="h-3 w-72" />
+        <div className="flex gap-3">
+          <Skeleton className="h-3 w-16" />
+          <Skeleton className="h-3 w-10" />
+          <Skeleton className="h-3 w-24" />
+        </div>
+      </div>
+      <Skeleton className="h-8 w-8 rounded-md" />
+    </div>
+  );
+}
 
 export default function GitHubPage() {
   const navigate = useNavigate();
-  // Toggle this to preview empty state: set to true
-  const [connected] = useState(true);
+  const [repos, setRepos] = useState<GitHubRepo[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
-  if (!connected) {
+  const token = localStorage.getItem("devhub_github_token");
+
+  useEffect(() => {
+    if (!token) {
+      setLoading(false);
+      return;
+    }
+
+    fetch("https://api.github.com/user/repos?sort=pushed&per_page=50", {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then((res) => {
+        if (!res.ok) throw new Error("Failed");
+        return res.json();
+      })
+      .then((data: GitHubRepo[]) => {
+        setRepos(data);
+        setLoading(false);
+      })
+      .catch(() => {
+        setError("Could not connect to GitHub. Check your token in Settings.");
+        setLoading(false);
+      });
+  }, [token]);
+
+  if (!token) {
     return (
       <div className="space-y-6 max-w-4xl">
         <h1 className="text-lg font-semibold text-foreground">GitHub Repositories</h1>
@@ -32,60 +87,81 @@ export default function GitHubPage() {
     <div className="space-y-6 max-w-4xl">
       <h1 className="text-lg font-semibold text-foreground">GitHub Repositories</h1>
 
+      {error && (
+        <div className="flex items-center gap-2 p-4 rounded-lg border border-destructive/30 bg-destructive/5 text-destructive text-sm">
+          <AlertCircle className="h-4 w-4 flex-shrink-0" />
+          <span>{error}</span>
+          <Button size="sm" variant="outline" className="ml-auto text-xs" onClick={() => navigate("/settings")}>
+            Go to Settings
+          </Button>
+        </div>
+      )}
+
       <div className="bg-card border border-border rounded-lg divide-y divide-border">
-        {mockRepos.map((repo) => {
-          const lang = getLanguageConfig(repo.language);
-          return (
-            <div
-              key={repo.id}
-              className="flex items-center justify-between px-5 py-4 hover:bg-surface-hover transition-colors animate-fade-in"
-            >
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 mb-1">
-                  <h3 className="text-sm font-medium text-foreground">{repo.fullName}</h3>
-                  {repo.isLinked && (
-                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-primary/10 text-primary font-medium">
-                      Linked
-                    </span>
-                  )}
-                </div>
-                <p className="text-xs text-muted-foreground mb-2">{repo.description}</p>
-                <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                  <span className="flex items-center gap-1">
-                    <span style={{ color: lang.color }}>{lang.icon}</span>
-                    {repo.language}
-                  </span>
-                  <span className="flex items-center gap-1">
-                    <Star className="h-3 w-3" />
-                    {repo.stars}
-                  </span>
-                  <span>Updated {repo.updatedAt}</span>
-                </div>
-              </div>
-              <div className="flex gap-2 ml-4">
-                {!repo.isLinked && (
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="text-xs h-8 gap-1.5"
-                    onClick={() => toast.success(`Linked ${repo.name} to a project`)}
-                  >
-                    <LinkIcon className="h-3 w-3" />
-                    Link
-                  </Button>
-                )}
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  className="text-xs h-8 gap-1.5 text-muted-foreground"
-                  onClick={() => window.open(`https://github.com/${repo.fullName}`, "_blank")}
+        {loading
+          ? Array.from({ length: 6 }).map((_, i) => <RepoSkeleton key={i} />)
+          : repos.map((repo, index) => {
+              const lang = repo.language ? getLanguageConfig(repo.language) : null;
+              return (
+                <div
+                  key={repo.id}
+                  className="flex items-center justify-between px-5 py-4 hover:bg-surface-hover transition-colors animate-fade-in"
+                  style={{ animationDelay: `${index * 50}ms` }}
                 >
-                  <ExternalLink className="h-3 w-3" />
-                </Button>
-              </div>
-            </div>
-          );
-        })}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-1">
+                      <h3 className="text-sm font-medium text-foreground">{repo.full_name}</h3>
+                    </div>
+                    {repo.description && (
+                      <p className="text-xs text-muted-foreground mb-2 truncate max-w-lg">{repo.description}</p>
+                    )}
+                    <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                      {lang && (
+                        <span className="flex items-center gap-1">
+                          <span style={{ color: lang.color }}>{lang.icon}</span>
+                          {repo.language}
+                        </span>
+                      )}
+                      <span className="flex items-center gap-1">
+                        <Star className="h-3 w-3" />
+                        {repo.stargazers_count}
+                      </span>
+                      <span>
+                        Updated {formatDistanceToNow(new Date(repo.pushed_at), { addSuffix: true })}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="flex gap-2 ml-4">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="text-xs h-8 gap-1.5"
+                      onClick={() => toast.success(`Linked ${repo.name} to a project`)}
+                    >
+                      <LinkIcon className="h-3 w-3" />
+                      Link
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="text-xs h-8 gap-1.5 text-muted-foreground"
+                      onClick={() => window.open(repo.html_url, "_blank")}
+                    >
+                      <ExternalLink className="h-3 w-3" />
+                    </Button>
+                  </div>
+                </div>
+              );
+            })}
+        {!loading && !error && repos.length === 0 && (
+          <div className="px-5 py-12">
+            <EmptyState
+              icon={Github}
+              title="No repositories found"
+              subtitle="Your GitHub account doesn't have any repositories yet"
+            />
+          </div>
+        )}
       </div>
     </div>
   );
