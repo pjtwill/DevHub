@@ -3,6 +3,7 @@ import { LayoutGrid, List, GitBranch, FolderOpen, ArrowUpDown, Plus, FolderKanba
 import { useNavigate } from "react-router-dom";
 import { ProjectCard } from "@/components/ProjectCard";
 import { ProjectDetailPanel } from "@/components/ProjectDetailPanel";
+import { CreateRepoModal } from "@/components/CreateRepoModal";
 import { EmptyState } from "@/components/EmptyState";
 import { getLanguageConfig } from "@/lib/languages";
 import { cn } from "@/lib/utils";
@@ -88,6 +89,7 @@ export default function Projects() {
   const [langFilter, setLangFilter] = useState("All");
   const [view, setView] = useState<"grid" | "list">("grid");
   const [selectedRepo, setSelectedRepo] = useState<GitHubRepo | null>(null);
+  const [createOpen, setCreateOpen] = useState(false);
   const navigate = useNavigate();
   const { repos, reposLoading } = useGitHubUser();
 
@@ -101,7 +103,13 @@ export default function Projects() {
   return (
     <div className="space-y-6 max-w-6xl">
       <div className="flex items-center justify-between">
-        <h1 className="text-lg font-semibold text-foreground">Projects</h1>
+        <div className="flex items-center gap-3">
+          <h1 className="text-lg font-semibold text-foreground">Projects</h1>
+          <Button size="sm" className="gap-1.5 text-xs h-8" onClick={() => setCreateOpen(true)}>
+            <Plus className="h-3.5 w-3.5" />
+            Add Project
+          </Button>
+        </div>
         <div className="flex items-center gap-3">
           {languages.length > 1 && (
             <div className="flex bg-secondary rounded-md p-0.5">
@@ -174,13 +182,18 @@ export default function Projects() {
           title="No projects yet"
           subtitle="Add your first project or link a GitHub repo to get started"
           actions={[
-            { label: "Add Project", onClick: () => toast.info("Add project flow coming soon") },
+            { label: "Add Project", onClick: () => setCreateOpen(true) },
             { label: "Browse GitHub Repos", variant: "outline", onClick: () => navigate("/github") },
           ]}
         />
       )}
 
       <ProjectDetailPanel repo={selectedRepo} onClose={() => setSelectedRepo(null)} />
+      <CreateRepoModal
+        open={createOpen}
+        onClose={() => setCreateOpen(false)}
+        onCreated={(repo) => setSelectedRepo(repo)}
+      />
     </div>
   );
 }
