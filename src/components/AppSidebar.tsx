@@ -4,6 +4,7 @@ import { cn } from "@/lib/utils";
 import {
   LayoutDashboard,
   FolderKanban,
+  Star,
   Github,
   Settings,
   Code2,
@@ -15,6 +16,7 @@ import { ProfileModal } from "@/components/ProfileModal";
 const navItems = [
   { to: "/", label: "Dashboard", icon: LayoutDashboard },
   { to: "/projects", label: "Projects", icon: FolderKanban },
+  { to: "/starred", label: "Starred", icon: Star },
   { to: "/github", label: "GitHub", icon: Github },
   { to: "/settings", label: "Settings", icon: Settings },
 ];
