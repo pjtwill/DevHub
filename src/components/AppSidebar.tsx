@@ -5,6 +5,7 @@ import {
   LayoutDashboard,
   FolderKanban,
   Star,
+  BarChart3,
   Github,
   Settings,
   Code2,
@@ -17,6 +18,7 @@ const navItems = [
   { to: "/", label: "Dashboard", icon: LayoutDashboard },
   { to: "/projects", label: "Projects", icon: FolderKanban },
   { to: "/starred", label: "Starred", icon: Star },
+  { to: "/stats", label: "Stats", icon: BarChart3 },
   { to: "/github", label: "GitHub", icon: Github },
   { to: "/settings", label: "Settings", icon: Settings },
 ];
