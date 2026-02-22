@@ -1,5 +1,4 @@
 import { GitBranch, ExternalLink, FolderOpen, ArrowUpDown } from "lucide-react";
-import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Project } from "@/data/types";
 import { getLanguageConfig } from "@/lib/languages";
@@ -14,17 +13,17 @@ const statusConfig = {
 
 interface ProjectCardProps {
   project: Project;
+  onClick?: () => void;
 }
 
-export function ProjectCard({ project }: ProjectCardProps) {
-  const navigate = useNavigate();
+export function ProjectCard({ project, onClick }: ProjectCardProps) {
   const lang = getLanguageConfig(project.language);
   const status = statusConfig[project.syncStatus];
 
   return (
     <div
       className="group bg-card border border-border rounded-lg p-5 transition-all duration-200 hover:border-primary/30 hover:bg-surface-hover animate-fade-in cursor-pointer"
-      onClick={() => navigate(`/projects/${project.id}`)}
+      onClick={onClick}
     >
       {/* Header */}
       <div className="flex items-start justify-between mb-4">
