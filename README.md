@@ -14,11 +14,13 @@ A dark, minimalist desktop-style app to manage your GitHub repositories — view
 
 ---
 ## Prints
-<img width="1568" height="751" alt="progithub1" src="https://github.com/user-attachments/assets/e76ae7ed-0f0f-4d96-b580-3787fd44e803" />
-![progithub2](https://github.com/user-attachments/assets/b27a01bd-8f4c-4174-b51d-7658a8b5cdfc)
-![progithub3](https://github.com/user-attachments/assets/5d6045f1-f74f-4b64-a202-2fc4e1348273)
-![progithub4](https://github.com/user-attachments/assets/6e4cff88-0fd6-45a5-9087-4f824177274f)
+<img width="1568" height="751" alt="progithub1" src="https://github.com/user-attachments/assets/e76ae7ed-0f0f-4d96-b580-3787fd44e803">
 
+<img width="1568" height="751" alt="progithub2" src="https://github.com/user-attachments/assets/aa7bb73e-869d-4ab3-845e-5db09adef9da">
+
+<img width="1568" height="751" alt="progithub3" src="https://github.com/user-attachments/assets/06c481b9-a3f7-4d6a-85ab-c99bb73eea76">
+
+<img width="1568" height="751" alt="progithub4" src="https://github.com/user-attachments/assets/724b43a7-ca9e-4159-b0bb-8cdd358c1d2c">
 ---
 
 ## ✨ Features
