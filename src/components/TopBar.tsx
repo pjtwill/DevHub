@@ -202,26 +202,32 @@ export function TopBar({ onAddProject, onOpenCommand }: TopBarProps) {
           )}
         </div>
 
-        <div className="flex items-center gap-2 px-3 py-1.5 rounded-md bg-success/10 border border-success/20">
-          <span className="relative flex h-2 w-2">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-success opacity-50" />
-            <span className="relative inline-flex rounded-full h-2 w-2 bg-success" />
-          </span>
-          <Github className="h-3.5 w-3.5 text-success" />
-          <span className="text-xs font-medium text-success">Connected</span>
-          {user && (
-            <>
-              <span className="text-success/40">·</span>
-              <Avatar className="h-5 w-5">
-                <AvatarImage src={user.avatar_url} alt={user.login} />
-                <AvatarFallback className="text-[8px] bg-success/20 text-success">
-                  {user.login.slice(0, 2).toUpperCase()}
-                </AvatarFallback>
-              </Avatar>
-              <span className="text-xs font-medium text-success">{user.login}</span>
-            </>
-          )}
-        </div>
+        {user ? (
+          <div className="flex items-center gap-2 px-3 py-1.5 rounded-md bg-success/10 border border-success/20">
+            <span className="relative flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-success opacity-50" />
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-success" />
+            </span>
+            <Github className="h-3.5 w-3.5 text-success" />
+            <span className="text-xs font-medium text-success">Connected</span>
+            <span className="text-success/40">·</span>
+            <Avatar className="h-5 w-5">
+              <AvatarImage src={user.avatar_url} alt={user.login} />
+              <AvatarFallback className="text-[8px] bg-success/20 text-success">
+                {user.login.slice(0, 2).toUpperCase()}
+              </AvatarFallback>
+            </Avatar>
+            <span className="text-xs font-medium text-success">{user.login}</span>
+          </div>
+        ) : (
+          <div className="flex items-center gap-2 px-3 py-1.5 rounded-md bg-muted/30 border border-border">
+            <span className="relative flex h-2 w-2">
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-muted-foreground/50" />
+            </span>
+            <Github className="h-3.5 w-3.5 text-muted-foreground" />
+            <span className="text-xs font-medium text-muted-foreground">Disconnected</span>
+          </div>
+        )}
         <Button size="sm" className="gap-2" onClick={onAddProject}>
           <Plus className="h-4 w-4" />
           Add Project

@@ -65,6 +65,7 @@ export function GitHubUserProvider({ children }: { children: ReactNode }) {
       });
       if (!res.ok) {
         setUser(null);
+        localStorage.removeItem("devhub_github_token");
         return { success: false, error: "Invalid token" };
       }
       const data = await res.json();
@@ -74,6 +75,7 @@ export function GitHubUserProvider({ children }: { children: ReactNode }) {
       return { success: true };
     } catch {
       setUser(null);
+      localStorage.removeItem("devhub_github_token");
       return { success: false, error: "Network error" };
     } finally {
       setLoading(false);
