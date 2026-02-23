@@ -8,8 +8,8 @@ import {
   BarChart3,
   Github,
   Settings,
-  Code2,
 } from "lucide-react";
+import logo from "@/assets/logo.svg";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { useGitHubUser } from "@/contexts/GitHubUserContext";
 import { ProfileModal } from "@/components/ProfileModal";
@@ -33,7 +33,7 @@ export function AppSidebar() {
       <aside className="fixed left-0 top-0 bottom-0 w-56 bg-sidebar border-r border-border flex flex-col z-30">
         {/* Logo */}
         <div className="flex items-center gap-2.5 px-5 h-14 border-b border-border">
-          <Code2 className="h-5 w-5 text-primary" />
+          <img src={logo} alt="DevHub Logo" className="h-5 w-5" />
           <span className="text-base font-semibold text-foreground tracking-tight">
             DevHub
           </span>
